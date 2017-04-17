@@ -4,12 +4,25 @@
 
 #include "pch.h"
 #include "Game.h"
+#include <PrimitiveBatch.h>
+#include <VertexTypes.h>
+#include <Effects.h>
+#include <CommonStates.h>
+#include <SimpleMath.h>
 
 extern void ExitGame();
 
+/* -- 名前空間を解放 ---- */
 using namespace DirectX;
+using namespace DirectX::SimpleMath;
+
 
 using Microsoft::WRL::ComPtr;
+
+/* -- グローバル変数宣言 ---- */
+std::unique_ptr<PrimitiveBatch<VertexPositionColor>> primitiveBatch;	// プリミティブバッチ
+std::unique_ptr<BasicEffect> basicEffect;
+ComPtr<ID3D11InputLayout> inputLayout;
 
 Game::Game() :
     m_window(0),
@@ -36,6 +49,30 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     */
+
+	// プリミティブバッチの初期化
+	primitiveBatch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(m_d3dContext.Get());
+
+	// エフェクトの初期化
+	basicEffect = std::make_unique<BasicEffect>(m_d3dDevice.Get());
+
+	// 写し方を設定
+	basicEffect->SetProjection(XMMatrixOrthographicOffCenterRH(0,
+		m_outputWidth, m_outputHeight, 0, 0, 1));
+	basicEffect->SetVertexColorEnabled(true);
+
+	// 
+	void const* shaderByteCode;
+	size_t byteCodeLength;
+
+	// 
+	basicEffect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+
+	// 
+	m_d3dDevice.Get()->CreateInputLayout(VertexPositionColor::InputElements,
+		VertexPositionColor::InputElementCount,
+		shaderByteCode, byteCodeLength,
+		inputLayout.GetAddressOf());
 }
 
 // Executes the basic game loop.
@@ -56,6 +93,8 @@ void Game::Update(DX::StepTimer const& timer)
 
     // TODO: Add your game logic here.
     elapsedTime;
+
+	// ゲームの毎フレーム処理
 }
 
 // Draws the scene.
@@ -70,6 +109,25 @@ void Game::Render()
     Clear();
 
     // TODO: Add your rendering code here.
+	// レンダー処理はここに書く
+
+	// いろいろ設定
+	CommonStates states(m_d3dDevice1.Get());
+	m_d3dContext->OMSetBlendState(states.Opaque(), nullptr, 0xFFFFFFFF);	// 透明度
+	m_d3dContext->OMSetDepthStencilState(states.DepthNone(), 0);			// 描画する順番
+	m_d3dContext->RSSetState(states.CullNone());							// 裏面から見えるか
+
+	// エフェクトとレイアウトを設定
+	basicEffect->Apply(m_d3dContext.Get());				
+	m_d3dContext->IASetInputLayout(inputLayout.Get());	
+
+	// 描画する
+	primitiveBatch->Begin();
+	primitiveBatch->DrawLine(
+		VertexPositionColor(Vector3(0.0f, 0.0f, 0.0f), Color(1.0f, 1.0f, 1.0f)),
+		VertexPositionColor(Vector3(800.0f, 600.0f, 0.0f), Color(1.0f, 1.0f, 1.0f))
+	);
+	primitiveBatch->End();
 
     Present();
 }
