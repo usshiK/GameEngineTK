@@ -68,6 +68,25 @@ void Game::Initialize(HWND window, int width, int height)
 
 	// デバッグカメラの生成
 	m_debugCamera = std::make_unique<DebugCamera>(m_outputWidth, m_outputHeight);
+
+	// エフェクトファクトリー生成
+	m_factory = std::make_unique<EffectFactory>(m_d3dDevice.Get());
+
+	// テクスチャの読み込みフォルダを指定
+	m_factory->SetDirectory(L"Resources");
+
+	// モデルを読み込む
+	m_ground = Model::CreateFromCMO(
+		m_d3dDevice.Get(),
+		L"Resources/ground1m.cmo",
+		*m_factory
+	);
+
+	m_skyModel = Model::CreateFromCMO(
+		m_d3dDevice.Get(),
+		L"Resources/sky.cmo",
+		*m_factory
+	);
 }
 
 // Executes the basic game loop.
@@ -138,7 +157,7 @@ void Game::Render()
 	m_view = m_debugCamera->GetCameraMatrix();
 
 	// 射影行列を作る								↓視野角(XM_PI =π)	↓画面の縦と横の長さの比率			↓一番近い所と一番遠い所
-	m_proj = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,float(m_outputWidth) / float(m_outputHeight), 0.1f, 10.f);
+	m_proj = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,float(m_outputWidth) / float(m_outputHeight), 0.1f, 200.f);
 
 	m_effect->SetView(m_view);
 	m_effect->SetProjection(m_proj);
@@ -147,6 +166,17 @@ void Game::Render()
 	// エフェクトとレイアウトを設定
 	m_effect->Apply(m_d3dContext.Get());				
 	m_d3dContext->IASetInputLayout(m_inputLayout.Get());	
+
+	
+	// 空を描画
+	m_skyModel->Draw(m_d3dContext.Get(),
+		*m_states,
+		m_world, m_view, m_proj);
+
+	// 地面を描画
+	m_ground->Draw(m_d3dContext.Get(), 
+		*m_states, 
+		m_world, m_view, m_proj);
 
 	// 描画する
 	m_batch->Begin();
