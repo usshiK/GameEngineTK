@@ -141,10 +141,11 @@ void Game::Update(DX::StepTimer const& timer)
 		// 内側の設定
 		if (i < 10)
 		{
+			scaleMat = Matrix::CreateScale((m_frame % 360) / 10);
+
 			transMat = Matrix::CreateTranslation(20.0f, 0.0f, 0.0f);
 
 			rotMatY = Matrix::CreateRotationY(XMConvertToRadians((i * 36.0f) + m_frame % 360));		// 　ヨー軸(方位角)
-			rotMat =rotMatY;								// 上三つを合成
 		}
 		// 外側の設定
 		else if (i < 20)
@@ -152,15 +153,16 @@ void Game::Update(DX::StepTimer const& timer)
 			transMat = Matrix::CreateTranslation(40.0f, 0.0f, 0.0f);
 
 			rotMatY = Matrix::CreateRotationY(XMConvertToRadians(((i * 36.0f) - m_frame%360)));		// 　ヨー軸(方位角)
-			rotMat = rotMatY;								// 上三つを合成
 		}
 		else
 		{
 			scaleMat = Matrix::CreateScale(3.0f);
 
 			rotMatY = Matrix::CreateRotationY(XMConvertToRadians(((i * 36.0f) - m_frame % 360)));		// 　ヨー軸(方位角)
-			rotMat = rotMatY;								// 上三つを合成
 		}
+
+		// 上三つを合成
+		rotMat = rotMatZ * rotMatX * rotMatY;								
 
 		// ワールド行列の合成
 		m_worldKyuu[i] = scaleMat * transMat * rotMat;
