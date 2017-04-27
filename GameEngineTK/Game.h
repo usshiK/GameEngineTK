@@ -90,4 +90,12 @@ private:
 	// モデル
 	std::unique_ptr<DirectX::Model> m_ground;
 	std::unique_ptr<DirectX::Model> m_skyModel;
+	std::unique_ptr<DirectX::Model> m_kyuu;
+
+	// 球のワールド行列
+#define KYUU_NUM 21
+	DirectX::SimpleMath::Matrix m_worldKyuu[KYUU_NUM];
+
+	// フレームを数える
+	int m_frame;
 };

@@ -87,6 +87,15 @@ void Game::Initialize(HWND window, int width, int height)
 		L"Resources/sky.cmo",
 		*m_factory
 	);
+
+	m_kyuu = Model::CreateFromCMO(
+		m_d3dDevice.Get(),
+		L"Resources/kyuu.cmo",
+		*m_factory
+	);
+
+	// フレーム数を初期化	
+	m_frame = 0;
 }
 
 // Executes the basic game loop.
@@ -113,6 +122,52 @@ void Game::Update(DX::StepTimer const& timer)
 
 
 	// ゲームの毎フレーム処理
+
+	// 球のワールド行列の計算
+	for (int i = 0; i < KYUU_NUM; i++)
+	{
+		// スケーリング行列
+		Matrix scaleMat = Matrix::Identity;
+
+		// 平行移動行列
+		Matrix transMat = Matrix::Identity;
+
+		// 回転行列
+		Matrix rotMatZ = Matrix::Identity;		// ロール軸
+		Matrix rotMatX = Matrix::Identity;		// ピッチ軸(仰角)
+		Matrix rotMatY = Matrix::Identity;		// 　ヨー軸(方位角)
+		Matrix rotMat = Matrix::Identity;		// 上三つを合成
+
+		// 内側の設定
+		if (i < 10)
+		{
+			transMat = Matrix::CreateTranslation(20.0f, 0.0f, 0.0f);
+
+			rotMatY = Matrix::CreateRotationY(XMConvertToRadians((i * 36.0f) + m_frame % 360));		// 　ヨー軸(方位角)
+			rotMat =rotMatY;								// 上三つを合成
+		}
+		// 外側の設定
+		else if (i < 20)
+		{
+			transMat = Matrix::CreateTranslation(40.0f, 0.0f, 0.0f);
+
+			rotMatY = Matrix::CreateRotationY(XMConvertToRadians(((i * 36.0f) - m_frame%360)));		// 　ヨー軸(方位角)
+			rotMat = rotMatY;								// 上三つを合成
+		}
+		else
+		{
+			scaleMat = Matrix::CreateScale(3.0f);
+
+			rotMatY = Matrix::CreateRotationY(XMConvertToRadians(((i * 36.0f) - m_frame % 360)));		// 　ヨー軸(方位角)
+			rotMat = rotMatY;								// 上三つを合成
+		}
+
+		// ワールド行列の合成
+		m_worldKyuu[i] = scaleMat * transMat * rotMat;
+	}
+
+	// フレームを数える
+	m_frame++;
 }
 
 // Draws the scene.
@@ -177,6 +232,14 @@ void Game::Render()
 	m_ground->Draw(m_d3dContext.Get(), 
 		*m_states, 
 		m_world, m_view, m_proj);
+
+	// 球を描画
+	for (int i = 0; i < KYUU_NUM; i++)
+	{
+		m_kyuu->Draw(m_d3dContext.Get(),
+			*m_states,
+			m_worldKyuu[i], m_view, m_proj);
+	}
 
 	// 描画する
 	m_batch->Begin();
