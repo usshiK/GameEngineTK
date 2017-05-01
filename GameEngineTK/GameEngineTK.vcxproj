@@ -194,6 +194,7 @@
   </ItemGroup>
   <ItemGroup>
     <MeshContentTask Include="Assets\ground1m.FBX" />
+    <MeshContentTask Include="Assets\ground20m.FBX" />
     <MeshContentTask Include="Assets\kyuu.FBX" />
     <MeshContentTask Include="Assets\sky.FBX" />
   </ItemGroup>

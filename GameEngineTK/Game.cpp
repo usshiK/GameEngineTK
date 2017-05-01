@@ -78,7 +78,7 @@ void Game::Initialize(HWND window, int width, int height)
 	// ƒ‚ƒfƒ‹‚ğ“Ç‚İ‚Ş
 	m_ground = Model::CreateFromCMO(
 		m_d3dDevice.Get(),
-		L"Resources/ground1m.cmo",
+		L"Resources/ground20m.cmo",
 		*m_factory
 	);
 
@@ -141,7 +141,7 @@ void Game::Update(DX::StepTimer const& timer)
 		// “à‘¤‚Ìİ’è
 		if (i < 10)
 		{
-			scaleMat = Matrix::CreateScale((m_frame % 360) / 10);
+			scaleMat = Matrix::CreateScale((m_frame % 90) / 30 + 1);
 
 			transMat = Matrix::CreateTranslation(20.0f, 0.0f, 0.0f);
 
