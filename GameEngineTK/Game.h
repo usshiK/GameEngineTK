@@ -13,6 +13,7 @@
 #include <SimpleMath.h>
 #include <Model.h>
 #include "DebugCamera.h"
+#include <Keyboard.h>
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -91,11 +92,32 @@ private:
 	std::unique_ptr<DirectX::Model> m_ground;
 	std::unique_ptr<DirectX::Model> m_skyModel;
 	std::unique_ptr<DirectX::Model> m_kyuu;
+	std::unique_ptr<DirectX::Model> m_teaPod;
 
 	// 球のワールド行列
 #define KYUU_NUM 21
 	DirectX::SimpleMath::Matrix m_worldKyuu[KYUU_NUM];
 
+#define TEAPOD_NUM 20
+	DirectX::SimpleMath::Matrix m_worldTeaPod[TEAPOD_NUM];
+	int m_teaPodPos[TEAPOD_NUM];
+	int m_teaPodRot[TEAPOD_NUM];
+
+	// ロボットのキャタピラ
+	std::unique_ptr<DirectX::Model>m_robotBase;
+	// ロボットの座標
+	DirectX::SimpleMath::Vector3 m_tankPos;
+	// ロボットのワールド行列
+	DirectX::SimpleMath::Matrix m_woldRobot;
+	// ロボットの平行移動行列
+	DirectX::SimpleMath::Matrix m_trnsMatRobot;
+	// ロボットの回転行列
+	DirectX::SimpleMath::Matrix m_rotMatRobot;
+	float m_rotY;
+
 	// フレームを数える
 	int m_frame;
+
+	// キーボード
+	std::unique_ptr<DirectX::Keyboard> m_keyBoard;
 };

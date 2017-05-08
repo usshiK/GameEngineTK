@@ -4,6 +4,7 @@
 
 #include "pch.h"
 #include "Game.h"
+#include <ctime>
 
 extern void ExitGame();
 
@@ -14,7 +15,9 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
-/* -- グローバル変数宣言 ---- */
+
+/* -- プロトタイプ宣言 ---- */
+float sinWave(float t);
 
 Game::Game() :
     m_window(0),
@@ -41,6 +44,8 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     */
+
+	srand(static_cast<unsigned int>(time(nullptr)));
 
 	// プリミティブバッチの初期化
 	m_batch = std::make_unique<PrimitiveBatch<VertexPositionNormal/*VertexPositionColor*/>>(m_d3dContext.Get());
@@ -94,8 +99,35 @@ void Game::Initialize(HWND window, int width, int height)
 		*m_factory
 	);
 
+	m_teaPod = Model::CreateFromCMO(
+		m_d3dDevice.Get(),
+		L"Resources/teaPod.cmo",
+		*m_factory
+	);
+
+
 	// フレーム数を初期化	
 	m_frame = 0;
+
+	// ティーポッドの位置をランダムで決める
+	for (int i = 0; i < TEAPOD_NUM; i++)
+	{
+		m_teaPodPos[i] = rand() % 100;
+		m_teaPodRot[i] = rand() % 360;
+	}
+
+	// ロボット
+	m_robotBase = Model::CreateFromCMO(
+		m_d3dDevice.Get(),
+		L"Resources/robotBase.cmo",
+		*m_factory
+	);
+	m_rotY = 0.0f;
+
+	// キーボードの初期化
+	m_keyBoard = std::make_unique<Keyboard>();
+
+
 }
 
 // Executes the basic game loop.
@@ -123,6 +155,49 @@ void Game::Update(DX::StepTimer const& timer)
 
 	// ゲームの毎フレーム処理
 
+	// キーボード入力
+	// キーボードの状態を取得
+	auto kb = m_keyBoard->GetState();
+
+	// 自機の方向転換
+	if (kb.A)
+	{
+		m_rotY += 0.1f;
+	}
+	if (kb.D)
+	{
+		m_rotY -= 0.1f;
+	}
+
+	// 自機に反映
+	m_rotMatRobot = Matrix::CreateRotationY(m_rotY);
+	// 自機の前進後退
+	if (kb.W)
+	{
+		// 前方に移動
+		Vector3 moveV(0.0f,0.0f,-0.1f);
+
+		moveV = Vector3::TransformNormal(moveV,m_woldRobot);
+
+		// 自機に反映する
+		m_tankPos += moveV;
+	}
+	if (kb.S)
+	{
+		// 前方に移動
+		Vector3 moveV(0.0f, 0.0f, 0.1f);
+
+		moveV = Vector3::TransformNormal(moveV, m_woldRobot);
+
+		// 自機に反映する
+		m_tankPos += moveV;
+	}
+
+	{// 自機のワールド行列を計算
+		m_trnsMatRobot = Matrix::CreateTranslation(m_tankPos);
+
+		m_woldRobot = m_rotMatRobot * m_trnsMatRobot;
+	}
 	// 球のワールド行列の計算
 	for (int i = 0; i < KYUU_NUM; i++)
 	{
@@ -166,6 +241,43 @@ void Game::Update(DX::StepTimer const& timer)
 
 		// ワールド行列の合成
 		m_worldKyuu[i] = scaleMat * transMat * rotMat;
+	}
+
+	// ティーポッドの行列の計算
+	for (int i = 0; i < TEAPOD_NUM; i++)
+	{
+		// スケーリング行列
+		Matrix scaleMat = Matrix::Identity;
+
+		// 平行移動行列
+		Matrix transMat = Matrix::Identity;
+
+		// 回転行列
+		Matrix rotMatZ = Matrix::Identity;		// ロール軸
+		Matrix rotMatX = Matrix::Identity;		// ピッチ軸(仰角)
+		Matrix rotMatY = Matrix::Identity;		// 　ヨー軸(方位角)
+		Matrix rotMat = Matrix::Identity;		// 上三つを合成
+
+		// スケーリング行列
+#define SCALE_SPD 100.0f
+		scaleMat = Matrix::CreateScale(/*sinWave(m_frame / SCALE_SPD)+0.1f*/0.5f);
+
+		// 位置をランダムに設定
+		float a = 10;
+		int a2 = a*10;
+		float b = (m_frame % a2) /10;
+		transMat = Matrix::CreateTranslation(m_teaPodPos[i] * (1.0f-((b+1)/a)), 0.0f, 0.0f);
+
+		// 回転行列
+		rotMatY = Matrix::CreateRotationY(m_teaPodRot[i]);
+
+		// 回転行列を合体
+		rotMat = rotMatZ * rotMatX * rotMatY;
+#define ROT_SPD 10
+		Matrix rotRev = Matrix::CreateRotationY(static_cast<float>(m_frame % (360 * ROT_SPD))/ ROT_SPD);
+
+		// 三種の行列を合体
+		m_worldTeaPod[i] =  scaleMat * rotRev * transMat * rotMat;
 	}
 
 	// フレームを数える
@@ -236,12 +348,25 @@ void Game::Render()
 		m_world, m_view, m_proj);
 
 	// 球を描画
-	for (int i = 0; i < KYUU_NUM; i++)
-	{
-		m_kyuu->Draw(m_d3dContext.Get(),
-			*m_states,
-			m_worldKyuu[i], m_view, m_proj);
-	}
+	//for (int i = 0; i < KYUU_NUM; i++)
+	//{
+	//	m_kyuu->Draw(m_d3dContext.Get(),
+	//		*m_states,
+	//		m_worldKyuu[i], m_view, m_proj);
+	//}
+
+	//for (int i = 0; i < TEAPOD_NUM; i++)
+	//{
+	//	m_teaPod->Draw(m_d3dContext.Get(),
+	//		*m_states,
+	//		m_worldTeaPod[i], m_view, m_proj);
+	//}
+
+	// ロボットのキャタピラ
+	m_robotBase->Draw(m_d3dContext.Get(),
+		*m_states,
+		m_woldRobot, m_view, m_proj);
+
 
 	// 描画する
 	m_batch->Begin();
@@ -561,3 +686,8 @@ void Game::OnDeviceLost()
 
     CreateResources();
 }
+
+float sinWave(float t)
+{
+	return (sinf(t) + 1.0f) / 2.0f;
+};
