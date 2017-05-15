@@ -128,12 +128,12 @@ void Game::Initialize(HWND window, int width, int height)
 	m_keyBoard = std::make_unique<Keyboard>();
 
 	// カメラの初期化
-	m_camera = std::make_unique<Camera>(m_outputWidth, m_outputHeight);
+	m_camera = std::make_unique<FollowCamera>(m_outputWidth, m_outputHeight);
 	Vector3 eyepos = Vector3(m_tankPos);
 	eyepos += Vector3(0.0f, 5.0f, 5.0f);
 	m_camera->setEyePos(eyepos);
 	Vector3 refpos = Vector3(m_tankPos.x, m_tankPos.y, m_tankPos.z);
-	refpos += Vector3(0.0f, 0.0f, -10.0f);
+	refpos += Vector3(0.0f, 0.0f, -5.0f);
 	m_camera->setRefPos(refpos);
 }
 
@@ -169,26 +169,15 @@ void Game::Update(DX::StepTimer const& timer)
 	// 自機の方向転換
 	if (kb.A)
 	{
-		m_rotY += 0.1f;
+		m_rotY += 0.05f;
 
-		Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
-		eyepos += Vector3(0.0f, 5.0f, 0.0f);
-		m_camera->setEyePos(eyepos);
-
-		Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
-		m_camera->setRefPos(refpos);
-
+		//setCamera();
 	}
 	if (kb.D)
 	{
-		m_rotY -= 0.1f;
-		Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
-		eyepos += Vector3(0.0f, 5.0f, 0.0f);
-		m_camera->setEyePos(eyepos);
+		m_rotY -= 0.05f;
 
-		Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
-		m_camera->setRefPos(refpos);
-
+		//setCamera();
 	}
 
 	// キーボード入力を自機に反映
@@ -205,13 +194,7 @@ void Game::Update(DX::StepTimer const& timer)
 		// 自機に反映する
 		m_tankPos += moveV;
 
-		Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
-		eyepos += Vector3(0.0f, 5.0f, 0.0f);
-		m_camera->setEyePos(eyepos);
-
-		Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
-		m_camera->setRefPos(refpos);
-
+		//setCamera();
 	}
 	if (kb.S)
 	{
@@ -223,24 +206,15 @@ void Game::Update(DX::StepTimer const& timer)
 		// 自機に反映する
 		m_tankPos += moveV;
 
-		Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
-		eyepos += Vector3(0.0f, 5.0f, 0.0f);
-		m_camera->setEyePos(eyepos);
-
-		Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
-		m_camera->setRefPos(refpos);
-
-
+		//setCamera();
 	}
 
+	m_camera->setTargetPos(m_tankPos);
+	m_camera->setTargetAngle(m_rotY);
+
 	// カメラの更新
-	//Vector3 eyepos = Vector3(m_tankPos.x + moveV.x, m_tankPos.y + moveV.y + 3.0f, m_tankPos.z + moveV.z * 5);
-	Vector3 eyepos = Vector3(m_tankPos - moveV*50);
-	eyepos += Vector3(0.0f,5.0f,0.0f);
-	//m_camera->setEyePos(eyepos);
-	Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
-	//m_camera->setRefPos(refpos);
 	m_camera->update();
+
 	m_view = m_camera->getViewMatrix();
 	m_proj = m_camera->getProjMatrix();
 
@@ -435,6 +409,20 @@ void Game::Render()
 
     Present();
 }
+
+/// <summary>
+/// カメラをセットする
+/// </summary>
+void Game::setCamera()
+{
+	Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
+	eyepos += Vector3(0.0f, 5.0f, 0.0f);
+	m_camera->setEyePos(eyepos);
+
+	Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
+	m_camera->setRefPos(refpos);
+}
+
 
 // Helper method to clear the back buffers.
 void Game::Clear()
@@ -730,6 +718,7 @@ void Game::OnDeviceLost()
 
     CreateResources();
 }
+
 
 float sinWave(float t)
 {

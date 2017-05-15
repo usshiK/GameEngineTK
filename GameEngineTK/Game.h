@@ -15,7 +15,8 @@
 #include "DebugCamera.h"
 #include <Keyboard.h>
 
-#include"Camera.h"
+//#include"Camera.h"
+#include "FollowCamera.h"
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -125,5 +126,8 @@ private:
 	std::unique_ptr<DirectX::Keyboard> m_keyBoard;
 
 	// ƒJƒƒ‰
-	std::unique_ptr<Camera> m_camera;
+	std::unique_ptr<FollowCamera> m_camera;
+
+	// ƒJƒƒ‰‚ğİ’è‚·‚éŠÖ”
+	void setCamera();
 };

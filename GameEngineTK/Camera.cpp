@@ -25,8 +25,8 @@ Camera::Camera(int width, int height)
 
 	m_fovY = XMConvertToRadians(60.0f);
 	m_aspect = static_cast<float>(width) / height;
-	m_nearClip = 0.0001f;
-	m_farClip = 100000000.0f;
+	m_nearClip = 0.01f;
+	m_farClip = 1000.0f;
 }
 
 
@@ -55,7 +55,7 @@ void Camera::update()
 /// ビュー行列を取得
 /// </summary>
 /// <returns>ビュー行列</returns>
-DirectX::SimpleMath::Matrix Camera::getViewMatrix()
+const Matrix& Camera::getViewMatrix()
 {
 	return m_view;
 }
@@ -64,7 +64,7 @@ DirectX::SimpleMath::Matrix Camera::getViewMatrix()
 /// 射影行列を取得
 /// </summary>
 /// <returns>射影行列</returns>
-DirectX::SimpleMath::Matrix Camera::getProjMatrix()
+const Matrix& Camera::getProjMatrix()
 {
 	return m_proj;
 }
@@ -73,7 +73,7 @@ DirectX::SimpleMath::Matrix Camera::getProjMatrix()
 /// 視点座標をセット
 /// </summary>
 /// <param name="eyePos">視点座標</param>
-void Camera::setEyePos(DirectX::SimpleMath::Vector3 eyePos)
+void Camera::setEyePos(const Vector3& eyePos)
 {
 	m_eyePos = eyePos;
 }
@@ -83,7 +83,7 @@ void Camera::setEyePos(DirectX::SimpleMath::Vector3 eyePos)
 /// 注視点をセット
 /// </summary>
 /// <param name="refPos">注視点</param>
-void Camera::setRefPos(DirectX::SimpleMath::Vector3 refPos)
+void Camera::setRefPos(const Vector3& refPos)
 {
 	m_refPos = refPos;
 }
@@ -92,7 +92,43 @@ void Camera::setRefPos(DirectX::SimpleMath::Vector3 refPos)
 /// 上方向ベクトルをセット
 /// </summary>
 /// <param name="UpVec">上方向ベクトル</param>
-void Camera::setUpVec(DirectX::SimpleMath::Vector3 UpVec)
+void Camera::setUpVec(const Vector3& UpVec)
 {
 	m_upVec = UpVec;
+}
+
+/// <summary>
+/// 垂直方向視野角をセット
+/// </summary>
+/// <param name="fovY">セットしたい垂直方向視野角</param>
+void Camera::setFovY(float fovY)
+{
+	m_fovY = fovY;
+}
+
+/// <summary>
+/// 画面の縦横比をセット
+/// </summary>
+/// <param name="aspect">セットしたい画面の縦横比</param>
+void Camera::setAspect(float aspect)
+{
+	m_aspect = aspect;
+}
+
+/// <summary>
+/// 近くの表示限界をセット
+/// </summary>
+/// <param name="nearClip">セットしたい近くの表示限界</param>
+void Camera::setNearClip(float nearClip)
+{
+	m_nearClip = nearClip;
+}
+
+/// <summary>
+/// 遠くの表示限界をセット
+/// </summary>
+/// <param name="farClip">セットしたい遠くの表示限界</param>
+void Camera::setFarClip(float farClip)
+{
+	m_farClip = farClip;
 }
