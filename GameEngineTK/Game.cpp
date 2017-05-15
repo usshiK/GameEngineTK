@@ -127,7 +127,14 @@ void Game::Initialize(HWND window, int width, int height)
 	// キーボードの初期化
 	m_keyBoard = std::make_unique<Keyboard>();
 
-
+	// カメラの初期化
+	m_camera = std::make_unique<Camera>(m_outputWidth, m_outputHeight);
+	Vector3 eyepos = Vector3(m_tankPos);
+	eyepos += Vector3(0.0f, 5.0f, 5.0f);
+	m_camera->setEyePos(eyepos);
+	Vector3 refpos = Vector3(m_tankPos.x, m_tankPos.y, m_tankPos.z);
+	refpos += Vector3(0.0f, 0.0f, -10.0f);
+	m_camera->setRefPos(refpos);
 }
 
 // Executes the basic game loop.
@@ -163,35 +170,80 @@ void Game::Update(DX::StepTimer const& timer)
 	if (kb.A)
 	{
 		m_rotY += 0.1f;
+
+		Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
+		eyepos += Vector3(0.0f, 5.0f, 0.0f);
+		m_camera->setEyePos(eyepos);
+
+		Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
+		m_camera->setRefPos(refpos);
+
 	}
 	if (kb.D)
 	{
 		m_rotY -= 0.1f;
+		Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
+		eyepos += Vector3(0.0f, 5.0f, 0.0f);
+		m_camera->setEyePos(eyepos);
+
+		Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
+		m_camera->setRefPos(refpos);
+
 	}
 
-	// 自機に反映
+	// キーボード入力を自機に反映
 	m_rotMatRobot = Matrix::CreateRotationY(m_rotY);
+
 	// 自機の前進後退
 	if (kb.W)
 	{
 		// 前方に移動
-		Vector3 moveV(0.0f,0.0f,-0.1f);
+		moveV = Vector3(0.0f,0.0f,-0.1f);
 
 		moveV = Vector3::TransformNormal(moveV,m_woldRobot);
 
 		// 自機に反映する
 		m_tankPos += moveV;
+
+		Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
+		eyepos += Vector3(0.0f, 5.0f, 0.0f);
+		m_camera->setEyePos(eyepos);
+
+		Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
+		m_camera->setRefPos(refpos);
+
 	}
 	if (kb.S)
 	{
 		// 前方に移動
-		Vector3 moveV(0.0f, 0.0f, 0.1f);
+		moveV = Vector3(0.0f, 0.0f, 0.1f);
 
 		moveV = Vector3::TransformNormal(moveV, m_woldRobot);
 
 		// 自機に反映する
 		m_tankPos += moveV;
+
+		Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
+		eyepos += Vector3(0.0f, 5.0f, 0.0f);
+		m_camera->setEyePos(eyepos);
+
+		Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
+		m_camera->setRefPos(refpos);
+
+
 	}
+
+	// カメラの更新
+	//Vector3 eyepos = Vector3(m_tankPos.x + moveV.x, m_tankPos.y + moveV.y + 3.0f, m_tankPos.z + moveV.z * 5);
+	Vector3 eyepos = Vector3(m_tankPos - moveV*50);
+	eyepos += Vector3(0.0f,5.0f,0.0f);
+	//m_camera->setEyePos(eyepos);
+	Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
+	//m_camera->setRefPos(refpos);
+	m_camera->update();
+	m_view = m_camera->getViewMatrix();
+	m_proj = m_camera->getProjMatrix();
+
 
 	{// 自機のワールド行列を計算
 		m_trnsMatRobot = Matrix::CreateTranslation(m_tankPos);
@@ -319,14 +371,6 @@ void Game::Render()
 	m_d3dContext->OMSetBlendState(m_states->Opaque(), nullptr, 0xFFFFFFFF);	// 透明度
 	m_d3dContext->OMSetDepthStencilState(m_states->DepthNone(), 0);			// 描画する順番
 	m_d3dContext->RSSetState(m_states->Wireframe());							// 裏面から見えるか
-
-	// ビュー行列を作る				↓カメラの位置			↓向き			↓上はどっちか
-	//m_view = Matrix::CreateLookAt(Vector3(0.f, 3.f, 3.f),Vector3::Zero, Vector3::UnitY);
-	// デバッグカメラからビュー行列を取得
-	m_view = m_debugCamera->GetCameraMatrix();
-
-	// 射影行列を作る								↓視野角(XM_PI =π)	↓画面の縦と横の長さの比率			↓一番近い所と一番遠い所
-	m_proj = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,float(m_outputWidth) / float(m_outputHeight), 0.1f, 200.f);
 
 	m_effect->SetView(m_view);
 	m_effect->SetProjection(m_proj);

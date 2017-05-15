@@ -15,6 +15,8 @@
 #include "DebugCamera.h"
 #include <Keyboard.h>
 
+#include"Camera.h"
+
 
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
@@ -114,10 +116,14 @@ private:
 	// ロボットの回転行列
 	DirectX::SimpleMath::Matrix m_rotMatRobot;
 	float m_rotY;
+	DirectX::SimpleMath::Vector3 moveV;
 
 	// フレームを数える
 	int m_frame;
 
 	// キーボード
 	std::unique_ptr<DirectX::Keyboard> m_keyBoard;
+
+	// カメラ
+	std::unique_ptr<Camera> m_camera;
 };
