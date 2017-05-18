@@ -135,6 +135,7 @@ void Game::Initialize(HWND window, int width, int height)
 	Vector3 refpos = Vector3(m_tankPos.x, m_tankPos.y, m_tankPos.z);
 	refpos += Vector3(0.0f, 0.0f, -5.0f);
 	m_camera->setRefPos(refpos);
+	m_camera->setKeyBoard(m_keyBoard.get());
 }
 
 // Executes the basic game loop.
@@ -286,7 +287,7 @@ void Game::Update(DX::StepTimer const& timer)
 
 		// スケーリング行列
 #define SCALE_SPD 100.0f
-		scaleMat = Matrix::CreateScale(/*sinWave(m_frame / SCALE_SPD)+0.1f*/0.5f);
+		scaleMat = Matrix::CreateScale(sinWave(m_frame / SCALE_SPD)+0.1f);
 
 		// 位置をランダムに設定
 		float a = 10;
@@ -295,7 +296,7 @@ void Game::Update(DX::StepTimer const& timer)
 		transMat = Matrix::CreateTranslation(m_teaPodPos[i] * (1.0f-((b+1)/a)), 0.0f, 0.0f);
 
 		// 回転行列
-		rotMatY = Matrix::CreateRotationY(m_teaPodRot[i]);
+		//rotMatY = Matrix::CreateRotationY(m_teaPodRot[i]);
 
 		// 回転行列を合体
 		rotMat = rotMatZ * rotMatX * rotMatY;
@@ -365,7 +366,7 @@ void Game::Render()
 		*m_states, 
 		m_world, m_view, m_proj);
 
-	// 球を描画
+	//// 球を描画
 	//for (int i = 0; i < KYUU_NUM; i++)
 	//{
 	//	m_kyuu->Draw(m_d3dContext.Get(),
@@ -373,12 +374,13 @@ void Game::Render()
 	//		m_worldKyuu[i], m_view, m_proj);
 	//}
 
-	//for (int i = 0; i < TEAPOD_NUM; i++)
-	//{
-	//	m_teaPod->Draw(m_d3dContext.Get(),
-	//		*m_states,
-	//		m_worldTeaPod[i], m_view, m_proj);
-	//}
+	// ティーポッドの描画
+	for (int i = 0; i < TEAPOD_NUM; i++)
+	{
+		m_teaPod->Draw(m_d3dContext.Get(),
+			*m_states,
+			m_worldTeaPod[i], m_view, m_proj);
+	}
 
 	// ロボットのキャタピラ
 	m_robotBase->Draw(m_d3dContext.Get(),
