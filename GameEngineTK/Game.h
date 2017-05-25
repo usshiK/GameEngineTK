@@ -17,6 +17,7 @@
 
 //#include"Camera.h"
 #include "FollowCamera.h"
+#include "Obj3d.h"
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -24,6 +25,15 @@
 class Game
 {
 public:
+	// プレイヤーのパーツに番号を付ける
+	enum PLAYER_PARTS
+	{
+		PLAYER_PARTS_BASE,	// キャタピラ
+		PLAYER_PARTS_BODY,	// 体
+		PLAYER_PARTS_BREAST,// 胸
+
+		PLAYER_PARTS_NUM
+	};
 
     Game();
 
@@ -93,7 +103,7 @@ private:
 
 	// モデル
 	std::unique_ptr<DirectX::Model> m_ground;
-	std::unique_ptr<DirectX::Model> m_skyModel;
+	Obj3d m_objSkyModel;
 	std::unique_ptr<DirectX::Model> m_kyuu;
 	std::unique_ptr<DirectX::Model> m_teaPod;
 
@@ -106,18 +116,10 @@ private:
 	int m_teaPodPos[TEAPOD_NUM];
 	int m_teaPodRot[TEAPOD_NUM];
 
-	// ロボットのキャタピラ
-	std::unique_ptr<DirectX::Model>m_robotBase;
 	// ロボットの座標
 	DirectX::SimpleMath::Vector3 m_tankPos;
-	// ロボットのワールド行列
-	DirectX::SimpleMath::Matrix m_woldRobot;
-	// ロボットの平行移動行列
-	DirectX::SimpleMath::Matrix m_trnsMatRobot;
-	// ロボットの回転行列
-	DirectX::SimpleMath::Matrix m_rotMatRobot;
-	float m_rotY;
-	DirectX::SimpleMath::Vector3 moveV;
+	// ロボット
+	std::vector<Obj3d>m_player;
 
 	// フレームを数える
 	int m_frame;

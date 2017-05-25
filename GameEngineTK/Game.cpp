@@ -74,6 +74,22 @@ void Game::Initialize(HWND window, int width, int height)
 	// デバッグカメラの生成
 	m_debugCamera = std::make_unique<DebugCamera>(m_outputWidth, m_outputHeight);
 
+	// キーボードの初期化
+	m_keyBoard = std::make_unique<Keyboard>();
+
+	// カメラの初期化
+	m_camera = std::make_unique<FollowCamera>(m_outputWidth, m_outputHeight);
+	Vector3 eyepos = Vector3(m_tankPos);
+	eyepos += Vector3(0.0f, 5.0f, 5.0f);
+	m_camera->setEyePos(eyepos);
+	Vector3 refpos = Vector3(m_tankPos.x, m_tankPos.y, m_tankPos.z);
+	refpos += Vector3(0.0f, 0.0f, -5.0f);
+	m_camera->setRefPos(refpos);
+	m_camera->setKeyBoard(m_keyBoard.get());
+
+	// オブジェクトクラスの静的メンバを初期化
+	Obj3d::initializeStatic(m_camera.get(), m_d3dDevice, m_d3dContext);
+
 	// エフェクトファクトリー生成
 	m_factory = std::make_unique<EffectFactory>(m_d3dDevice.Get());
 
@@ -87,11 +103,8 @@ void Game::Initialize(HWND window, int width, int height)
 		*m_factory
 	);
 
-	m_skyModel = Model::CreateFromCMO(
-		m_d3dDevice.Get(),
-		L"Resources/sky.cmo",
-		*m_factory
-	);
+	// 空
+	m_objSkyModel.LoadModel(L"Resources/sky.cmo");
 
 	m_kyuu = Model::CreateFromCMO(
 		m_d3dDevice.Get(),
@@ -116,26 +129,15 @@ void Game::Initialize(HWND window, int width, int height)
 		m_teaPodRot[i] = rand() % 360;
 	}
 
-	// ロボット
-	m_robotBase = Model::CreateFromCMO(
-		m_d3dDevice.Get(),
-		L"Resources/robotBase.cmo",
-		*m_factory
-	);
-	m_rotY = 0.0f;
+	// ロボットのモデルを読み込む
+	m_player.resize(PLAYER_PARTS_NUM);	// 配列の個数をパーツの個数に増やす
+	m_player[PLAYER_PARTS_BASE].LoadModel(L"Resources/robotBase.cmo");
+	m_player[PLAYER_PARTS_BODY].LoadModel(L"Resources/robotBody.cmo");
+	m_player[PLAYER_PARTS_BREAST].LoadModel(L"Resources/robotBreast.cmo");
 
-	// キーボードの初期化
-	m_keyBoard = std::make_unique<Keyboard>();
 
-	// カメラの初期化
-	m_camera = std::make_unique<FollowCamera>(m_outputWidth, m_outputHeight);
-	Vector3 eyepos = Vector3(m_tankPos);
-	eyepos += Vector3(0.0f, 5.0f, 5.0f);
-	m_camera->setEyePos(eyepos);
-	Vector3 refpos = Vector3(m_tankPos.x, m_tankPos.y, m_tankPos.z);
-	refpos += Vector3(0.0f, 0.0f, -5.0f);
-	m_camera->setRefPos(refpos);
-	m_camera->setKeyBoard(m_keyBoard.get());
+	// 回転をセット
+	//m_player[].setRotate(Vector3(0.0f,0.0f,0.0f));
 }
 
 // Executes the basic game loop.
@@ -170,39 +172,37 @@ void Game::Update(DX::StepTimer const& timer)
 	// 自機の方向転換
 	if (kb.A)
 	{
-		m_rotY += 0.05f;
+		Vector3 v = Vector3(m_player[PLAYER_PARTS_BASE].getRotate().x, m_player[PLAYER_PARTS_BASE].getRotate().y + 0.05f, m_player[PLAYER_PARTS_BASE].getRotate().z);
+		m_player[PLAYER_PARTS_BASE].setRotate(v);
 
 		//setCamera();
 	}
 	if (kb.D)
 	{
-		m_rotY -= 0.05f;
+		Vector3 v = Vector3(m_player[PLAYER_PARTS_BASE].getRotate().x, m_player[PLAYER_PARTS_BASE].getRotate().y - 0.05f, m_player[PLAYER_PARTS_BASE].getRotate().z);
+		m_player[PLAYER_PARTS_BASE].setRotate(v);
 
 		//setCamera();
 	}
-
-	// キーボード入力を自機に反映
-	m_rotMatRobot = Matrix::CreateRotationY(m_rotY);
 
 	// 自機の前進後退
 	if (kb.W)
 	{
 		// 前方に移動
-		moveV = Vector3(0.0f,0.0f,-0.1f);
-
-		moveV = Vector3::TransformNormal(moveV,m_woldRobot);
-
-		// 自機に反映する
-		m_tankPos += moveV;
+		Vector3 moveV = Vector3(0.0f, 0.0f, 0.1f);
+		Matrix rotmat = Matrix::CreateRotationY(m_player[PLAYER_PARTS_BASE].getRotate().y);
+		moveV = Vector3::TransformNormal(moveV, rotmat);
+		m_player[PLAYER_PARTS_BASE].setTranse(m_player[PLAYER_PARTS_BASE].getTranse() - moveV);
 
 		//setCamera();
 	}
 	if (kb.S)
 	{
-		// 前方に移動
-		moveV = Vector3(0.0f, 0.0f, 0.1f);
-
-		moveV = Vector3::TransformNormal(moveV, m_woldRobot);
+		// 後方に移動
+		Vector3 moveV = Vector3(0.0f, 0.0f, -0.1f);
+		Matrix rotmat = Matrix::CreateRotationY(m_player[PLAYER_PARTS_BASE].getRotate().y);
+		moveV = Vector3::TransformNormal(moveV,rotmat);
+		m_player[PLAYER_PARTS_BASE].setTranse(m_player[PLAYER_PARTS_BASE].getTranse() - moveV);
 
 		// 自機に反映する
 		m_tankPos += moveV;
@@ -210,8 +210,11 @@ void Game::Update(DX::StepTimer const& timer)
 		//setCamera();
 	}
 
-	m_camera->setTargetPos(m_tankPos);
-	m_camera->setTargetAngle(m_rotY);
+	// ロボの更新
+	m_player[PLAYER_PARTS_BASE].update();
+
+	m_camera->setTargetPos(m_player[PLAYER_PARTS_BASE].getTranse());
+	m_camera->setTargetAngle(m_player[PLAYER_PARTS_BASE].getRotate().y);
 
 	// カメラの更新
 	m_camera->update();
@@ -219,12 +222,25 @@ void Game::Update(DX::StepTimer const& timer)
 	m_view = m_camera->getViewMatrix();
 	m_proj = m_camera->getProjMatrix();
 
+	// 空の更新
+	m_objSkyModel.update();
 
 	{// 自機のワールド行列を計算
-		m_trnsMatRobot = Matrix::CreateTranslation(m_tankPos);
+		//m_trnsMatRobot = Matrix::CreateTranslation(m_tankPos);
 
-		m_woldRobot = m_rotMatRobot * m_trnsMatRobot;
+		////m_woldRobot = m_rotMatRobot * m_trnsMatRobot;
+
+		//// 仮パーツのワールド座標
+		//static float angle = 0.0f;
+		//angle += 0.05f;
+		//// ロボットのもとのパーツよりどれだけ離れているかの平行移動行列
+		//Matrix trnsMatRobot2 = Matrix::CreateTranslation(Vector3(0.0f,0.5f,0.0f));
+		//Matrix rotMatRobot2 = Matrix::CreateRotationY(angle) * Matrix::CreateRotationZ(angle);
+
+		//m_woldRobot2 = rotMatRobot2 * trnsMatRobot2 * m_woldRobot;
 	}
+
+
 	// 球のワールド行列の計算
 	for (int i = 0; i < KYUU_NUM; i++)
 	{
@@ -357,9 +373,7 @@ void Game::Render()
 
 	
 	// 空を描画
-	m_skyModel->Draw(m_d3dContext.Get(),
-		*m_states,
-		m_world, m_view, m_proj);
+	m_objSkyModel.draw();
 
 	// 地面を描画
 	m_ground->Draw(m_d3dContext.Get(), 
@@ -375,18 +389,27 @@ void Game::Render()
 	//}
 
 	// ティーポッドの描画
-	for (int i = 0; i < TEAPOD_NUM; i++)
+	//for (int i = 0; i < TEAPOD_NUM; i++)
+	//{
+	//	m_teaPod->Draw(m_d3dContext.Get(),
+	//		*m_states,
+	//		m_worldTeaPod[i], m_view, m_proj);
+	//}
+
+	//// ロボットのキャタピラ
+	//m_robotBase->Draw(m_d3dContext.Get(),
+	//	*m_states,
+	//	m_woldRobot, m_view, m_proj);
+	// ロボットのキャタピラ2(仮)
+	////m_robotBase->Draw(m_d3dContext.Get(),
+	//	*m_states,
+	//	m_woldRobot2, m_view, m_proj);
+
+
+	for (std::vector<Obj3d>::iterator it = m_player.begin(); it != m_player.end(); it++)
 	{
-		m_teaPod->Draw(m_d3dContext.Get(),
-			*m_states,
-			m_worldTeaPod[i], m_view, m_proj);
+		it->draw();
 	}
-
-	// ロボットのキャタピラ
-	m_robotBase->Draw(m_d3dContext.Get(),
-		*m_states,
-		m_woldRobot, m_view, m_proj);
-
 
 	// 描画する
 	m_batch->Begin();
@@ -417,11 +440,11 @@ void Game::Render()
 /// </summary>
 void Game::setCamera()
 {
-	Vector3 eyepos = Vector3(m_tankPos - moveV * 50);
+	Vector3 eyepos = Vector3(m_tankPos - m_player[PLAYER_PARTS_BASE].getTranse() * 50);
 	eyepos += Vector3(0.0f, 5.0f, 0.0f);
 	m_camera->setEyePos(eyepos);
 
-	Vector3 refpos = Vector3(m_tankPos.x + moveV.x * 100, m_tankPos.y, m_tankPos.z + moveV.z * 100);
+	Vector3 refpos = Vector3(m_tankPos.x +  m_player[PLAYER_PARTS_BASE].getTranse().x * 100, m_tankPos.y, m_tankPos.z + m_player[PLAYER_PARTS_BASE].getTranse().z * 100);
 	m_camera->setRefPos(refpos);
 }
 
