@@ -16,6 +16,8 @@ using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
 
+
+float linaly(float t);
 /* -- プロトタイプ宣言 ---- */
 float sinWave(float t);
 
@@ -121,6 +123,8 @@ void Game::Initialize(HWND window, int width, int height)
 
 	// フレーム数を初期化	
 	m_frame = 0;
+	m_roboAngleX = 0.0f;
+	m_roboAngleY = 0.0f;
 
 	// ティーポッドの位置をランダムで決める
 	for (int i = 0; i < TEAPOD_NUM; i++)
@@ -134,10 +138,24 @@ void Game::Initialize(HWND window, int width, int height)
 	m_player[PLAYER_PARTS_BASE].LoadModel(L"Resources/robotBase.cmo");
 	m_player[PLAYER_PARTS_BODY].LoadModel(L"Resources/robotBody.cmo");
 	m_player[PLAYER_PARTS_BREAST].LoadModel(L"Resources/robotBreast.cmo");
+	m_player[PLAYER_PARTS_HEAD].LoadModel(L"Resources/robotHead.cmo");
+	m_player[PLAYER_PARTS_WING].LoadModel(L"Resources/robotWing.cmo");
 
+	// 親子関係を築く
+	m_player[PLAYER_PARTS_BODY].setParent(&m_player[PLAYER_PARTS_BASE]);
+	m_player[PLAYER_PARTS_BREAST].setParent(&m_player[PLAYER_PARTS_BODY]);
+	m_player[PLAYER_PARTS_HEAD].setParent(&m_player[PLAYER_PARTS_BREAST]);
+	m_player[PLAYER_PARTS_WING].setParent(&m_player[PLAYER_PARTS_BREAST]);
+
+	// 親からのオフセット(親から位置をずらす)
+	m_player[PLAYER_PARTS_BODY].setTranse(Vector3(0.0f,0.35f,0.0f));
+	m_player[PLAYER_PARTS_BREAST].setTranse(Vector3(0.0f, 0.4f, 0.0f));
+	m_player[PLAYER_PARTS_HEAD].setTranse(Vector3(0.0f, 0.6f, 0.0f));
+	m_player[PLAYER_PARTS_WING].setTranse(Vector3(0.0f, 0.3f,0.5f));
 
 	// 回転をセット
-	//m_player[].setRotate(Vector3(0.0f,0.0f,0.0f));
+	m_player[PLAYER_PARTS_WING].setRotate(Vector3(XMConvertToRadians(270), XMConvertToRadians(180), 0.0f));
+
 }
 
 // Executes the basic game loop.
@@ -170,23 +188,53 @@ void Game::Update(DX::StepTimer const& timer)
 	auto kb = m_keyBoard->GetState();
 
 	// 自機の方向転換
-	if (kb.A)
+	if (kb.A)	// Aキーを押したら
 	{
 		Vector3 v = Vector3(m_player[PLAYER_PARTS_BASE].getRotate().x, m_player[PLAYER_PARTS_BASE].getRotate().y + 0.05f, m_player[PLAYER_PARTS_BASE].getRotate().z);
 		m_player[PLAYER_PARTS_BASE].setRotate(v);
 
+		// 左に振り向く
+		if (m_roboAngleY <= 15.0f)
+		{
+			m_roboAngleY += 0.5f;
+		}
 		//setCamera();
 	}
-	if (kb.D)
+	else
+	{
+		// 振り向きを直す
+		if (m_roboAngleY >= 0.0f)
+		{
+			m_roboAngleY -= 0.5f;
+		}
+	}
+
+	if (kb.D)	// Dキーを押したら
 	{
 		Vector3 v = Vector3(m_player[PLAYER_PARTS_BASE].getRotate().x, m_player[PLAYER_PARTS_BASE].getRotate().y - 0.05f, m_player[PLAYER_PARTS_BASE].getRotate().z);
 		m_player[PLAYER_PARTS_BASE].setRotate(v);
 
-		//setCamera();
+		// 右に振り向く
+		if (m_roboAngleY >= -15.0f)
+		{
+			m_roboAngleY -= 0.5f;
+		}
 	}
+	else
+	{
+		// 振り向きを直す
+		if (m_roboAngleY <= 0.0f)
+		{
+			m_roboAngleY += 0.5f;
+		}
+	}
+	// 振り向きを更新
+	m_player[PLAYER_PARTS_BODY].setRotateY(XMConvertToRadians(m_roboAngleY));
+	m_player[PLAYER_PARTS_HEAD].setRotateY(XMConvertToRadians(m_roboAngleY * 1.2f));
+
 
 	// 自機の前進後退
-	if (kb.W)
+	if (kb.W)	// Wキーを押したら
 	{
 		// 前方に移動
 		Vector3 moveV = Vector3(0.0f, 0.0f, 0.1f);
@@ -194,9 +242,24 @@ void Game::Update(DX::StepTimer const& timer)
 		moveV = Vector3::TransformNormal(moveV, rotmat);
 		m_player[PLAYER_PARTS_BASE].setTranse(m_player[PLAYER_PARTS_BASE].getTranse() - moveV);
 
-		//setCamera();
+		// 前かがみにする
+		if (m_roboAngleX >= -15.0f)
+		{
+			m_roboAngleX -= 0.5f;
+		}
 	}
-	if (kb.S)
+	else
+	{
+		// 前かがみを直す
+		if (m_roboAngleX <= 0.0f)
+		{
+			m_roboAngleX += 0.5f;
+		}
+	}
+	// 前かがみを更新
+	m_player[PLAYER_PARTS_BODY].setRotateX(XMConvertToRadians(m_roboAngleX));
+
+	if (kb.S)	// Sキーを押したら
 	{
 		// 後方に移動
 		Vector3 moveV = Vector3(0.0f, 0.0f, -0.1f);
@@ -207,18 +270,60 @@ void Game::Update(DX::StepTimer const& timer)
 		// 自機に反映する
 		m_tankPos += moveV;
 
-		//setCamera();
+		// 後ろを見る
+		if (m_roboAngleY <= 45.0f)
+		{
+			m_roboAngleY += 1.5f;
+		}
+		if (m_roboAngleX <= 15.0f)
+		{
+			m_roboAngleX += 1.5f;
+		}
+	}
+	// 翼を上下させる
+	m_player[PLAYER_PARTS_WING].setTranseY(sinWave(m_frame / 20.0f) / 10 + 0.2f);
+
+
+	if (kb.Enter)	// スペースを押したら
+	{
+		// 上に飛ばす
+		m_player[PLAYER_PARTS_BASE].setTranseY(m_player[PLAYER_PARTS_BASE].getTranse().y + 0.05f);
+
+		// 翼を回転
+		m_player[PLAYER_PARTS_WING].setRotateY(m_player[PLAYER_PARTS_WING].getRotate().y + 0.5f);
+		m_player[PLAYER_PARTS_WING].setRotateX(0);
+		m_player[PLAYER_PARTS_WING].setTranseY(1.0f);
+		m_player[PLAYER_PARTS_WING].setTranseZ(0.0f);
+	}
+	else
+	{
+		// 重力を掛ける(仮)
+		if (m_player[PLAYER_PARTS_BASE].getTranse().y > 0)
+		{
+			m_player[PLAYER_PARTS_BASE].setTranseY(m_player[PLAYER_PARTS_BASE].getTranse().y - 0.2f);
+		}
+		else		
+		{
+			m_player[PLAYER_PARTS_BASE].setTranseY(0);
+		}
+
+		// 翼をもとに戻す
+		m_player[PLAYER_PARTS_WING].setRotateY(0);
+		m_player[PLAYER_PARTS_WING].setRotateX(90);
+		m_player[PLAYER_PARTS_WING].setTranseZ(0.5f);
 	}
 
 	// ロボの更新
 	m_player[PLAYER_PARTS_BASE].update();
-
-	m_camera->setTargetPos(m_player[PLAYER_PARTS_BASE].getTranse());
-	m_camera->setTargetAngle(m_player[PLAYER_PARTS_BASE].getRotate().y);
+	m_player[PLAYER_PARTS_BODY].update();
+	m_player[PLAYER_PARTS_BREAST].update();
+	m_player[PLAYER_PARTS_HEAD].update();
+	m_player[PLAYER_PARTS_WING].update();
 
 	// カメラの更新
+	m_camera->setTargetPos(m_player[PLAYER_PARTS_BASE].getTranse());
+	m_camera->setTargetAngle(m_player[PLAYER_PARTS_BASE].getRotate().y);
 	m_camera->update();
-
 	m_view = m_camera->getViewMatrix();
 	m_proj = m_camera->getProjMatrix();
 
@@ -744,6 +849,10 @@ void Game::OnDeviceLost()
     CreateResources();
 }
 
+float linaly(float t)
+{
+
+}
 
 float sinWave(float t)
 {

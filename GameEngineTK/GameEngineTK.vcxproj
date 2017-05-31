@@ -203,8 +203,10 @@
     <MeshContentTask Include="Assets\ground20m.FBX" />
     <MeshContentTask Include="Assets\kyuu.FBX" />
     <MeshContentTask Include="Assets\robotBase.FBX" />
-    <MeshContentTask Include="Assets\robotBod.FBX" />
+    <MeshContentTask Include="Assets\robotBody.FBX" />
     <MeshContentTask Include="Assets\robotBreast.FBX" />
+    <MeshContentTask Include="Assets\robotHead.FBX" />
+    <MeshContentTask Include="Assets\robotWing.FBX" />
     <MeshContentTask Include="Assets\sky.FBX" />
     <MeshContentTask Include="Assets\teaPod.FBX" />
   </ItemGroup>

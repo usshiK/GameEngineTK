@@ -56,10 +56,16 @@
     <MeshContentTask Include="Assets\robotBase.FBX">
       <Filter>Assets</Filter>
     </MeshContentTask>
-    <MeshContentTask Include="Assets\robotBod.FBX">
+    <MeshContentTask Include="Assets\robotBreast.FBX">
       <Filter>Assets</Filter>
     </MeshContentTask>
-    <MeshContentTask Include="Assets\robotBreast.FBX">
+    <MeshContentTask Include="Assets\robotBody.FBX">
+      <Filter>Assets</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\robotWing.FBX">
+      <Filter>Assets</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\robotHead.FBX">
       <Filter>Assets</Filter>
     </MeshContentTask>
   </ItemGroup>

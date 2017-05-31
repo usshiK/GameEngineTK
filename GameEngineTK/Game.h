@@ -31,6 +31,8 @@ public:
 		PLAYER_PARTS_BASE,	// キャタピラ
 		PLAYER_PARTS_BODY,	// 体
 		PLAYER_PARTS_BREAST,// 胸
+		PLAYER_PARTS_HEAD,	// 頭
+		PLAYER_PARTS_WING,	// 翼
 
 		PLAYER_PARTS_NUM
 	};
@@ -123,12 +125,15 @@ private:
 
 	// フレームを数える
 	int m_frame;
+	float m_roboAngleX;
+	float m_roboAngleY;
 
 	// キーボード
 	std::unique_ptr<DirectX::Keyboard> m_keyBoard;
 
 	// カメラ
 	std::unique_ptr<FollowCamera> m_camera;
+	//std::unique_ptr<FollowCamera> m_camera;
 
 	// カメラを設定する関数
 	void setCamera();

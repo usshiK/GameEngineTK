@@ -26,9 +26,15 @@ public:
 
 	// 回転角
 	void setRotate(const DirectX::SimpleMath::Vector3& rotate);
+	void setRotateX(const float rotate);
+	void setRotateY(const float rotate);
+	void setRotateZ(const float rotate);
 
 	// 平行移動
 	void setTranse(const DirectX::SimpleMath::Vector3& transe);
+	void setTranseX(const float transe);
+	void setTranseY(const float transe);
+	void setTranseZ(const float transe);
 
 	// 親オブジェクト
 	void setParent(Obj3d* parent);

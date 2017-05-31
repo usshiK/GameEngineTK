@@ -50,10 +50,46 @@ void Obj3d::setRotate(const Vector3& rotate)
 	m_rotate = rotate;
 }
 
+// 回転角X
+void Obj3d::setRotateX(const float rotate)
+{
+	m_rotate.x = rotate;
+}
+
+// 回転角Y
+void Obj3d::setRotateY(const float rotate)
+{
+	m_rotate.y = rotate;
+}
+
+// 回転角Z
+void Obj3d::setRotateZ(const float rotate)
+{
+	m_rotate.z = rotate;
+}
+
 // 平行移動
 void Obj3d::setTranse(const Vector3& transe)
 {
 	m_transe = transe;
+}
+
+// 平行移動X
+void Obj3d::setTranseX(const float transe)
+{
+	m_transe.x = transe;
+}
+
+// 平行移動Y
+void Obj3d::setTranseY(const float transe)
+{
+	m_transe.y = transe;
+}
+
+// 平行移動Z
+void Obj3d::setTranseZ(const float transe)
+{
+	m_transe.z = transe;
 }
 
 // 親オブジェクト
