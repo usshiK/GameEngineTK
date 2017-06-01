@@ -3,6 +3,7 @@
 /// </summary>
 #pragma once
 #include <direct.h>
+#include <d3d11_1.h>
 #include <SimpleMath.h>
 #include <Model.h>
 #include <Effects.h>

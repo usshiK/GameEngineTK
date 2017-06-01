@@ -4,7 +4,7 @@
 *|　作成日　　　2017/05/11
 *****************************************************************/
 #pragma once
-#include <d3d11.h>
+#include <d3d11_1.h>
 #include <SimpleMath.h>
 
 class Camera

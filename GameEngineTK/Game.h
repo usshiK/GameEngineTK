@@ -10,6 +10,7 @@
 #include <VertexTypes.h>
 #include <Effects.h>
 #include <CommonStates.h>
+
 #include <SimpleMath.h>
 #include <Model.h>
 #include "DebugCamera.h"
@@ -18,6 +19,7 @@
 //#include"Camera.h"
 #include "FollowCamera.h"
 #include "Obj3d.h"
+#include "Player.h"
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -25,18 +27,6 @@
 class Game
 {
 public:
-	// プレイヤーのパーツに番号を付ける
-	enum PLAYER_PARTS
-	{
-		PLAYER_PARTS_BASE,	// キャタピラ
-		PLAYER_PARTS_BODY,	// 体
-		PLAYER_PARTS_BREAST,// 胸
-		PLAYER_PARTS_HEAD,	// 頭
-		PLAYER_PARTS_WING,	// 翼
-
-		PLAYER_PARTS_NUM
-	};
-
     Game();
 
     // Initialization and management
@@ -121,7 +111,7 @@ private:
 	// ロボットの座標
 	DirectX::SimpleMath::Vector3 m_tankPos;
 	// ロボット
-	std::vector<Obj3d>m_player;
+	Player m_player;
 
 	// フレームを数える
 	int m_frame;
