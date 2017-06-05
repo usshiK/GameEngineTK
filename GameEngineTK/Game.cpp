@@ -135,6 +135,12 @@ void Game::Initialize(HWND window, int width, int height)
 
 	// プレイヤーの初期化
 	m_player.initialize(Vector3(0.0f,0.0f,0.0f));
+
+	// 敵の初期化
+	for (int i = 0; i < enemeyNum; i++)
+	{
+		m_enemy[i].initialize(Vector3(10.0f * i,0.0f,3.0f * i));
+	}
 }
 
 // Executes the basic game loop.
@@ -218,6 +224,10 @@ void Game::Update(DX::StepTimer const& timer)
 		m_player.inputkey(Player::ENTER);
 	}
 	m_player.update();
+	for (int i = 0; i < enemeyNum; i++)
+	{
+		m_enemy[i].update();
+	}
 
 	// カメラの更新
 	m_camera->setTargetPos(m_player.getTrance());
@@ -386,6 +396,13 @@ void Game::Render()
 
 	// プレイヤーの描画
 	m_player.render();
+
+	// 敵
+	for (int i = 0; i < enemeyNum; i++)
+	{
+		m_enemy[i].render();
+	}
+
 
 	// 描画する
 	m_batch->Begin();

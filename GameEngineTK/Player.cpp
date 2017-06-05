@@ -17,14 +17,14 @@ Player::~Player()
 
 void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos)
 {
-	m_object.resize(5);	// 配列の個数をパーツの個数に増やす
+	m_object.resize(PLAYER_PARTS_NUM);	// 配列の個数をパーツの個数に増やす
 	m_object[PLAYER_PARTS_BASE].LoadModel(L"Resources/robotBase.cmo");
 	m_object[PLAYER_PARTS_BODY].LoadModel(L"Resources/robotBody.cmo");
 	m_object[PLAYER_PARTS_BREAST].LoadModel(L"Resources/robotBreast.cmo");
 	m_object[PLAYER_PARTS_HEAD].LoadModel(L"Resources/robotHead.cmo");
 	m_object[PLAYER_PARTS_WING].LoadModel(L"Resources/robotWing.cmo");
 
-	// 親子関係を築く
+	//親子関係を築く
 	m_object[PLAYER_PARTS_BODY].setParent(&m_object[PLAYER_PARTS_BASE]);
 	m_object[PLAYER_PARTS_BREAST].setParent(&m_object[PLAYER_PARTS_BODY]);
 	m_object[PLAYER_PARTS_HEAD].setParent(&m_object[PLAYER_PARTS_BREAST]);
@@ -36,6 +36,9 @@ void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos)
 	m_object[PLAYER_PARTS_HEAD].setTranse(Vector3(0.0f, 0.6f, 0.0f));
 	m_object[PLAYER_PARTS_WING].setTranse(Vector3(0.0f, 0.3f, 0.5f));
 	m_object[PLAYER_PARTS_WING].setRotate(Vector3(XMConvertToRadians(270), XMConvertToRadians(180), 0.0f));
+
+	m_object[PLAYER_PARTS_BASE].setTranse(detoultPos);
+
 }
 
 void Player::update()

@@ -20,6 +20,7 @@
 #include "FollowCamera.h"
 #include "Obj3d.h"
 #include "Player.h"
+#include "Enemy.h"
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -112,6 +113,10 @@ private:
 	DirectX::SimpleMath::Vector3 m_tankPos;
 	// ロボット
 	Player m_player;
+
+	// 敵ロボット
+	const int enemeyNum = 15;
+	Enemy m_enemy[15];
 
 	// フレームを数える
 	int m_frame;
