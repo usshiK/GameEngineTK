@@ -5,6 +5,7 @@ using namespace DirectX::SimpleMath;
 
 
 Player::Player()
+	:m_keyBoard(nullptr)
 {
 
 }
@@ -15,7 +16,7 @@ Player::~Player()
 
 }
 
-void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos)
+void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos,Keyboard* keyBoard)
 {
 	m_object.resize(PLAYER_PARTS_NUM);	// 配列の個数をパーツの個数に増やす
 	m_object[PLAYER_PARTS_BASE].LoadModel(L"Resources/robotBase.cmo");
@@ -37,52 +38,84 @@ void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos)
 	m_object[PLAYER_PARTS_WING].setTranse(Vector3(0.0f, 0.3f, 0.5f));
 	m_object[PLAYER_PARTS_WING].setRotate(Vector3(XMConvertToRadians(270), XMConvertToRadians(180), 0.0f));
 
+	// 初期位置に配置
 	m_object[PLAYER_PARTS_BASE].setTranse(detoultPos);
+
+	// キーボード初期化
+	m_keyBoard = keyBoard;
+
+	// フレームカウントを初期化
+	m_frame = 0;
 
 }
 
 void Player::update()
 {
-	// 振り向きを直す
-	if (m_Rotation.y > 0.0f)
+
+	// キーボードの状態を取得
+	Keyboard::State keyState = m_keyBoard->GetState();
+
+	// Wを押したら
+	if (keyState.W)
 	{
-		m_Rotation.y -= 0.5f;
+		go();
 	}
-	if (m_Rotation.y < 0.0f)
+	// そうでない場合
+	else
 	{
-		m_Rotation.y += 0.5f;
+		// 前かがみを直す
+		if (m_Rotation.x <= 0.0f)
+		{
+			m_Rotation.x += 0.5f;
+		}
 	}
 
-	// 振り向きを更新
-	m_object[PLAYER_PARTS_BODY].setRotateY(XMConvertToRadians(m_Rotation.y));
-	m_object[PLAYER_PARTS_HEAD].setRotateY(XMConvertToRadians(m_Rotation.y * 1.2f));
-
-	// 前かがみを直す
-	if (m_Rotation.x <= 0.0f)
+	// Sを押したら
+	if (keyState.S)
 	{
-		m_Rotation.x += 0.5f;
+		back();
 	}
 
 	// 前かがみを更新
 	m_object[PLAYER_PARTS_BODY].setRotateX(XMConvertToRadians(m_Rotation.x));
 
-	// 翼を上下させる
-	if (m_object[PLAYER_PARTS_BASE].getTranse().y <= 0.0f)
+	// Dを押したら
+	if (keyState.D)
 	{
-		// 翼をもとに戻す
-		m_object[PLAYER_PARTS_WING].setRotateY(0);
-		m_object[PLAYER_PARTS_WING].setRotateX(90);
-		m_object[PLAYER_PARTS_WING].setTranseZ(0.5f);
+		turnRight();
+	}
+	else// 振り向きを直す
+	{
+		if (m_Rotation.y < 0.0f)
+		{
+			m_Rotation.y += 0.5f;
+		}
+	}
 
-		m_object[PLAYER_PARTS_WING].setTranseY(sinWave(m_frame / 20.0f) / 10 + 0.2f);
+	// Aを押したら
+	if (keyState.A)
+	{
+		turnLeft();
+	}
+	else// 振り向きを直す
+	{
+		if (m_Rotation.y > 0.0f)
+		{
+			m_Rotation.y -= 0.5f;
+		}
+	}
+	// 振り向きを更新
+	m_object[PLAYER_PARTS_BODY].setRotateY(XMConvertToRadians(m_Rotation.y));
+	m_object[PLAYER_PARTS_HEAD].setRotateY(XMConvertToRadians(m_Rotation.y * 1.2f));
+
+	// Enterを押したら
+	if (keyState.Enter)
+	{
+		fly();
 	}
 	else
 	{
-		// 翼を回転
-		m_object[PLAYER_PARTS_WING].setRotateY(m_object[PLAYER_PARTS_WING].getRotate().y + 0.2f);
-		m_object[PLAYER_PARTS_WING].setRotateX(0);
-		m_object[PLAYER_PARTS_WING].setTranseY(1.0f);
-		m_object[PLAYER_PARTS_WING].setTranseZ(0.0f);
+		fall();
 	}
 
 	// 重力を掛ける(仮)
@@ -113,79 +146,6 @@ void Player::render()
 	}
 }
 
-void Player::inputkey(KEY_CODE code)
-{
-	if (code == Player::W)
-	{
-		// 前方に移動
-		Vector3 moveV = Vector3(0.0f, 0.0f, 0.1f);
-		Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_BASE].getRotate().y);
-		moveV = Vector3::TransformNormal(moveV, rotmat);
-		m_object[PLAYER_PARTS_BASE].setTranse(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
-
-		// 前かがみにする
-		if (m_Rotation.x >= -15.0f)
-		{
-			m_Rotation.x -= 2.0f;
-		}
-	}
-
-	if (code == Player::A)
-	{
-		Vector3 v = Vector3(m_object[PLAYER_PARTS_BASE].getRotate().x, m_object[PLAYER_PARTS_BASE].getRotate().y + 0.05f, m_object[PLAYER_PARTS_BASE].getRotate().z);
-		m_object[PLAYER_PARTS_BASE].setRotate(v);
-
-		// 左に振り向く
-		if (m_Rotation.y <= 15.0f)
-		{
-			m_Rotation.y += 1.0f;
-		}
-	}
-
-	if (code == Player::S)
-	{
-		// 後方に移動
-		Vector3 moveV = Vector3(0.0f, 0.0f, -0.1f);
-		Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_BASE].getRotate().y);
-		moveV = Vector3::TransformNormal(moveV, rotmat);
-		m_object[PLAYER_PARTS_BASE].setTranse(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
-
-		// 後ろを見る
-		if (m_Rotation.y <= 45.0f)
-		{
-			m_Rotation.y += 1.5f;
-		}
-		if (m_Rotation.x <= 15.0f)
-		{
-			m_Rotation.x += 1.5f;
-		}
-	}
-
-	if (code == Player::D)
-	{
-		Vector3 v = Vector3(m_object[PLAYER_PARTS_BASE].getRotate().x, m_object[PLAYER_PARTS_BASE].getRotate().y - 0.05f, m_object[PLAYER_PARTS_BASE].getRotate().z);
-		m_object[PLAYER_PARTS_BASE].setRotate(v);
-
-		// 右に振り向く
-		if (m_Rotation.y >= -15.0f)
-		{
-			m_Rotation.y -= 1.0f;
-		}
-	}
-
-	if (code == Player::ENTER)
-	{
-		// 上に飛ばす
-		m_object[PLAYER_PARTS_BASE].setTranseY(m_object[PLAYER_PARTS_BASE].getTranse().y + 0.25f);
-
-		// 翼を回転
-		m_object[PLAYER_PARTS_WING].setRotateY(m_object[PLAYER_PARTS_WING].getRotate().y + 0.3f);
-		m_object[PLAYER_PARTS_WING].setRotateX(0);
-		m_object[PLAYER_PARTS_WING].setTranseY(1.0f);
-		m_object[PLAYER_PARTS_WING].setTranseZ(0.0f);
-	}
-}
-
 Vector3 Player::getTrance()
 {
 	return m_object[PLAYER_PARTS_BASE].getTranse();
@@ -194,6 +154,98 @@ Vector3 Player::getTrance()
 DirectX::SimpleMath::Vector3 Player::getRotation()
 {
 	return m_object[PLAYER_PARTS_BASE].getRotate();
+}
+
+void Player::go()
+{
+	// 前方に移動
+	Vector3 moveV = Vector3(0.0f, 0.0f, 0.1f);
+	Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_BASE].getRotate().y);
+	moveV = Vector3::TransformNormal(moveV, rotmat);
+	m_object[PLAYER_PARTS_BASE].setTranse(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
+
+	// 前かがみにする
+	if (m_Rotation.x >= -15.0f)
+	{
+		m_Rotation.x -= 1.0f;
+	}
+}
+
+void Player::back()
+{
+	// 後方に移動
+	Vector3 moveV = Vector3(0.0f, 0.0f, -0.1f);
+	Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_BASE].getRotate().y);
+	moveV = Vector3::TransformNormal(moveV, rotmat);
+	m_object[PLAYER_PARTS_BASE].setTranse(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
+
+	// 後ろを見る
+	if (m_Rotation.y <= 45.0f)
+	{
+		m_Rotation.y += 1.5f;
+	}
+	if (m_Rotation.x <= 15.0f)
+	{
+		m_Rotation.x += 1.5f;
+	}
+}
+
+void Player::turnRight()
+{
+	Vector3 v = Vector3(m_object[PLAYER_PARTS_BASE].getRotate().x, m_object[PLAYER_PARTS_BASE].getRotate().y - 0.05f, m_object[PLAYER_PARTS_BASE].getRotate().z);
+	m_object[PLAYER_PARTS_BASE].setRotate(v);
+
+	// 右に振り向く
+	if (m_Rotation.y >= -15.0f)
+	{
+		m_Rotation.y -= 1.0f;
+	}
+}
+
+void Player::turnLeft()
+{
+	Vector3 v = Vector3(m_object[PLAYER_PARTS_BASE].getRotate().x, m_object[PLAYER_PARTS_BASE].getRotate().y + 0.05f, m_object[PLAYER_PARTS_BASE].getRotate().z);
+	m_object[PLAYER_PARTS_BASE].setRotate(v);
+
+	// 左に振り向く
+	if (m_Rotation.y <= 15.0f)
+	{
+		m_Rotation.y += 1.0f;
+	}
+}
+
+void Player::fly()
+{
+	// 上に飛ばす
+	m_object[PLAYER_PARTS_BASE].setTranseY(m_object[PLAYER_PARTS_BASE].getTranse().y + 0.25f);
+
+	// 翼を回転
+	m_object[PLAYER_PARTS_WING].setRotateY(m_object[PLAYER_PARTS_WING].getRotate().y + 0.6f);
+	m_object[PLAYER_PARTS_WING].setRotateX(0);
+	m_object[PLAYER_PARTS_WING].setTranseY(1.0f);
+	m_object[PLAYER_PARTS_WING].setTranseZ(0.0f);
+}
+
+void Player::fall()
+{
+	// 翼を上下させる
+	if (m_object[PLAYER_PARTS_BASE].getTranse().y <= 0.0f)
+	{
+		// 翼をもとに戻す
+		m_object[PLAYER_PARTS_WING].setRotateY(0);
+		m_object[PLAYER_PARTS_WING].setRotateX(90);
+		m_object[PLAYER_PARTS_WING].setTranseZ(0.5f);
+
+		m_object[PLAYER_PARTS_WING].setTranseY(sinWave(m_frame / 20.0f) / 10.0f + 0.2f);
+	}
+	else
+	{
+		// 翼を回転
+		m_object[PLAYER_PARTS_WING].setRotateY(m_object[PLAYER_PARTS_WING].getRotate().y + 0.2f);
+		m_object[PLAYER_PARTS_WING].setRotateX(0);
+		m_object[PLAYER_PARTS_WING].setTranseY(1.0f);
+		m_object[PLAYER_PARTS_WING].setTranseZ(0.0f);
+	}
 }
 
 float Player::sinWave(float t)

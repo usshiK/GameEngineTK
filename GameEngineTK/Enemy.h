@@ -15,7 +15,7 @@ private:
 		AI_CODE_NUM
 	};
 
-	// プレイヤーのパーツに番号を付ける
+	// パーツに番号を付ける
 	enum ENEMY_PARTS
 	{
 		ENEMY_PARTS_BASE,	// キャタピラ

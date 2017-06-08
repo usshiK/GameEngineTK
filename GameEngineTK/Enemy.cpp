@@ -40,6 +40,8 @@ void Enemy::initialize(DirectX::SimpleMath::Vector3 detoultPos)
 	m_object[ENEMY_PARTS_BASE].setTranse(detoultPos);
 
 	m_ai = GO;
+
+	m_frame = 0;
 }
 
 void Enemy::update()
@@ -54,26 +56,23 @@ void Enemy::update()
 	// 現在のAIから行動を起こす
 	action();
 
-
 	// 振り向きを直す
-	if (m_Rotation.y > 0.0f)
+	if (m_ai != ROT_LEFT && m_Rotation.y > 0.0f)
 	{
 		m_Rotation.y -= 0.5f;
 	}
-	if (m_Rotation.y < 0.0f)
+	if (m_ai != ROT_RIGHT && m_Rotation.y < 0.0f)
 	{
 		m_Rotation.y += 0.5f;
 	}
+
 	// 振り向きを更新
 	m_object[ENEMY_PARTS_BODY].setRotateY(XMConvertToRadians(m_Rotation.y));
 	m_object[ENEMY_PARTS_HEAD].setRotateY(XMConvertToRadians(m_Rotation.y * 1.2f));
-	// 前かがみを直す
-	if (m_Rotation.x <= 0.0f)
-	{
-		m_Rotation.x += 0.5f;
-	}
+
 	// 前かがみを更新
 	m_object[ENEMY_PARTS_BODY].setRotateX(XMConvertToRadians(m_Rotation.x));
+
 	// 翼を上下させる
 	if (m_object[ENEMY_PARTS_BASE].getTranse().y <= 0.0f)
 	{
@@ -132,20 +131,6 @@ void Enemy::render()
 
 void Enemy::action()
 {
-	//if (code == Enemy::W)
-	//{
-	//	// 前方に移動
-	//	Vector3 moveV = Vector3(0.0f, 0.0f, 0.1f);
-	//	Matrix rotmat = Matrix::CreateRotationY(m_object[ENEMY_PARTS_BASE].getRotate().y);
-	//	moveV = Vector3::TransformNormal(moveV, rotmat);
-	//	m_object[ENEMY_PARTS_BASE].setTranse(m_object[ENEMY_PARTS_BASE].getTranse() - moveV);
-	//	// 前かがみにする
-	//	if (m_Rotation.x >= -15.0f)
-	//	{
-	//		m_Rotation.x -= 2.0f;
-	//	}
-	//}
-
 	if (m_ai == Enemy::ROT_LEFT)
 	{
 		Vector3 v = Vector3(m_object[ENEMY_PARTS_BASE].getRotate().x, m_object[ENEMY_PARTS_BASE].getRotate().y + 0.01f, m_object[ENEMY_PARTS_BASE].getRotate().z);
@@ -157,24 +142,6 @@ void Enemy::action()
 			m_Rotation.y += 1.0f;
 		}
 	}
-
-	//if (m_ai == Enemy::S)
-	//{
-	//	// 後方に移動
-	//	Vector3 moveV = Vector3(0.0f, 0.0f, -0.1f);
-	//	Matrix rotmat = Matrix::CreateRotationY(m_object[ENEMY_PARTS_BASE].getRotate().y);
-	//	moveV = Vector3::TransformNormal(moveV, rotmat);
-	//	m_object[ENEMY_PARTS_BASE].setTranse(m_object[ENEMY_PARTS_BASE].getTranse() - moveV);
-	//	// 後ろを見る
-	//	if (m_Rotation.y <= 45.0f)
-	//	{
-	//		m_Rotation.y += 1.5f;
-	//	}
-	//	if (m_Rotation.x <= 15.0f)
-	//	{
-	//		m_Rotation.x += 1.5f;
-	//	}
-	//}
 
 	if (m_ai == Enemy::ROT_RIGHT)
 	{

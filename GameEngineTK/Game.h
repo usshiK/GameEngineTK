@@ -112,7 +112,7 @@ private:
 	// ロボットの座標
 	DirectX::SimpleMath::Vector3 m_tankPos;
 	// ロボット
-	Player m_player;
+	std::unique_ptr<Player> m_player;
 
 	// 敵ロボット
 	const int enemeyNum = 15;

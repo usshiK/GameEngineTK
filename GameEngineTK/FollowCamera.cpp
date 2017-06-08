@@ -50,6 +50,10 @@ void FollowCamera::update()
 		}
 	}
 
+	setTargetPos(m_targetPointa->getTrance());
+	setTargetAngle(m_targetPointa->getRotation().y);
+
+
 	// FPSƒJƒƒ‰—p
 	Vector3 fpsCameraPos;
 

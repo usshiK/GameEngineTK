@@ -1,4 +1,6 @@
 #pragma once
+#include <d3d11_1.h>
+#include <Keyboard.h>
 #include <vector>
 #include "Obj3d.h"
 
@@ -16,11 +18,15 @@ private:
 
 		PLAYER_PARTS_NUM
 	};
+
 	int m_frame;
 
 	DirectX::SimpleMath::Vector3 m_Rotation;
 
 	std::vector<Obj3d> m_object;
+
+	// キーボード
+	DirectX::Keyboard* m_keyBoard;
 
 	// サインウェーブ
 	float sinWave(float t);
@@ -36,12 +42,19 @@ public:
 
 	Player();
 	~Player();
-	void initialize(DirectX::SimpleMath::Vector3 detoultPos);
+	void initialize(DirectX::SimpleMath::Vector3 detoultPos, DirectX::Keyboard* keyBoard);
 	void update();
 	void render();
 
-	void inputkey(KEY_CODE code);
 	DirectX::SimpleMath::Vector3 getTrance();
 	DirectX::SimpleMath::Vector3 getRotation();
+
+private:
+	void go();
+	void back();
+	void turnRight();
+	void turnLeft();
+	void fly();
+	void fall();
 };
 

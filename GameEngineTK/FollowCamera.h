@@ -5,6 +5,7 @@
 /* -- ヘッダーのインクルード ---- */
 #include "Camera.h"
 #include <Keyboard.h>
+#include "Player.h"
 
 #pragma once
 class FollowCamera : public Camera
@@ -25,6 +26,9 @@ public:
 	// キーボードのセット
 	void setKeyBoard(DirectX::Keyboard* keyBoard);
 
+	// 追従対象のセット
+	void setTarget(Player* target) { m_targetPointa = target; }
+
 	// TPSカメラの初期化
 	void initiarizeTPS();
 protected:
@@ -44,5 +48,8 @@ private:
 
 	// FPSとTPSの切り替えようフラグ
 	bool m_isTPS;
+
+	// 追従対象のポインタ
+	Player* m_targetPointa;
 };
 

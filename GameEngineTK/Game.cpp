@@ -134,7 +134,9 @@ void Game::Initialize(HWND window, int width, int height)
 	}
 
 	// プレイヤーの初期化
-	m_player.initialize(Vector3(0.0f,0.0f,0.0f));
+	m_player = std::make_unique<Player>();
+	m_player->initialize(Vector3(0.0f,0.0f,0.0f),m_keyBoard.get());
+	m_camera->setTarget(m_player.get());
 
 	// 敵の初期化
 	for (int i = 0; i < enemeyNum; i++)
@@ -168,70 +170,14 @@ void Game::Update(DX::StepTimer const& timer)
 
 	// ゲームの毎フレーム処理
 
-	// キーボード入力
-	// キーボードの状態を取得
-	auto kb = m_keyBoard->GetState();
+	m_player->update();
 
-	// 自機の方向転換
-	if (kb.A)	// Aキーを押したら
-	{
-		m_player.inputkey(Player::A);
-	}
-	else
-	{
-		// 振り向きを直す
-		if (m_roboAngleY >= 0.0f)
-		{
-			m_roboAngleY -= 0.5f;
-		}
-	}
-
-	if (kb.D)	// Dキーを押したら
-	{
-		m_player.inputkey(Player::D);
-	}
-	else
-	{
-		// 振り向きを直す
-		if (m_roboAngleY <= 0.0f)
-		{
-			m_roboAngleY += 0.5f;
-		}
-	}
-
-	// 自機の前進後退
-	if (kb.W)	// Wキーを押したら
-	{
-		m_player.inputkey(Player::W);
-	}
-	else
-	{
-		// 前かがみを直す
-		if (m_roboAngleX <= 0.0f)
-		{
-			m_roboAngleX += 0.5f;
-		}
-	}
-
-	if (kb.S)	// Sキーを押したら
-	{
-		m_player.inputkey(Player::S);
-	}
-
-
-	if (kb.Enter)	// エンターを押したら
-	{
-		m_player.inputkey(Player::ENTER);
-	}
-	m_player.update();
 	for (int i = 0; i < enemeyNum; i++)
 	{
 		m_enemy[i].update();
 	}
 
 	// カメラの更新
-	m_camera->setTargetPos(m_player.getTrance());
-	m_camera->setTargetAngle(m_player.getRotation().y);
 	m_camera->update();
 	m_view = m_camera->getViewMatrix();
 	m_proj = m_camera->getProjMatrix();
@@ -378,24 +324,8 @@ void Game::Render()
 		*m_states, 
 		m_world, m_view, m_proj);
 
-	//// 球を描画
-	//for (int i = 0; i < KYUU_NUM; i++)
-	//{
-	//	m_kyuu->Draw(m_d3dContext.Get(),
-	//		*m_states,
-	//		m_worldKyuu[i], m_view, m_proj);
-	//}
-
-	// ティーポッドの描画
-	//for (int i = 0; i < TEAPOD_NUM; i++)
-	//{
-	//	m_teaPod->Draw(m_d3dContext.Get(),
-	//		*m_states,
-	//		m_worldTeaPod[i], m_view, m_proj);
-	//}
-
 	// プレイヤーの描画
-	m_player.render();
+	m_player->render();
 
 	// 敵
 	for (int i = 0; i < enemeyNum; i++)
