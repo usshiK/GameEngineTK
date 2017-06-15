@@ -25,6 +25,7 @@ std::unique_ptr<DirectX::EffectFactory>		Obj3d::m_factory;
 Obj3d::Obj3d()
 	:m_parent(nullptr)
 	,m_scale(Vector3(1,1,1))
+	,m_useQuternion(false)
 {
 
 }
@@ -156,10 +157,18 @@ void Obj3d::update()
 	// スケーリング行列
 	Matrix scaleMat = Matrix::CreateScale(m_scale);
 	// 回転行列
-	Matrix rotateMatX = Matrix::CreateRotationX(m_rotate.x);
-	Matrix rotateMatY = Matrix::CreateRotationY(m_rotate.y);
-	Matrix rotateMatZ = Matrix::CreateRotationZ(m_rotate.z);
-	Matrix rotateMat = rotateMatX * rotateMatY * rotateMatZ;
+	Matrix rotateMat;
+	if (m_useQuternion)
+	{
+		rotateMat = Matrix::CreateFromQuaternion(m_rotateQ);
+	}
+	else
+	{// 
+		Matrix rotateMatX = Matrix::CreateRotationX(m_rotate.x);
+		Matrix rotateMatY = Matrix::CreateRotationY(m_rotate.y);
+		Matrix rotateMatZ = Matrix::CreateRotationZ(m_rotate.z);
+		rotateMat = rotateMatX * rotateMatY * rotateMatZ;
+	}
 	// 平行移動行列
 	Matrix transMat = Matrix::CreateTranslation(m_transe);
 

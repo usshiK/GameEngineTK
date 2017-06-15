@@ -37,6 +37,7 @@
     <ClInclude Include="Obj3d.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="Colision.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -60,6 +61,7 @@
     <ClCompile Include="Obj3d.cpp">
       <Filter>Object</Filter>
     </ClCompile>
+    <ClCompile Include="Colision.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />

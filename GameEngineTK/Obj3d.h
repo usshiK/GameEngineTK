@@ -30,6 +30,8 @@ public:
 	void setRotateX(const float rotate);
 	void setRotateY(const float rotate);
 	void setRotateZ(const float rotate);
+	// 回転角(クォータニオン)
+	void setRotateQ(const DirectX::SimpleMath::Quaternion& rotate) { m_rotateQ = rotate; }
 
 	// 平行移動
 	void setTranse(const DirectX::SimpleMath::Vector3& transe);
@@ -39,15 +41,6 @@ public:
 
 	// 親オブジェクト
 	void setParent(Obj3d* parent);
-
-
-
-	// 制定メンバ変数を初期化する 
-	static void initializeStatic(Camera* camera,
-		Microsoft::WRL::ComPtr<ID3D11Device> d3dDevice, 
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3dContext);
-
-
 
 	// ゲッター
 	// ワールド行列
@@ -62,7 +55,10 @@ public:
 	// 親オブジェクト
 	Obj3d* getParent();
 
-
+	// 静的メンバ変数を初期化する 
+	static void initializeStatic(Camera* camera,
+		Microsoft::WRL::ComPtr<ID3D11Device> d3dDevice,
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3dContext);
 
 	// 更新
 	void update();
@@ -81,6 +77,10 @@ private:
 
 	// 回転角
 	DirectX::SimpleMath::Vector3 m_rotate;
+	// 回転角(クォータニオン)
+	DirectX::SimpleMath::Quaternion m_rotateQ;
+	// 回転角をクォータニオンで持っているフラグ
+	bool m_useQuternion;
 
 	// 平行移動
 	DirectX::SimpleMath::Vector3 m_transe;

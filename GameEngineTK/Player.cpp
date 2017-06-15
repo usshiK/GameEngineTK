@@ -6,6 +6,7 @@ using namespace DirectX::SimpleMath;
 
 Player::Player()
 	:m_keyBoard(nullptr)
+	,isfire(false)
 {
 
 }
@@ -106,7 +107,7 @@ void Player::update()
 	}
 	// 振り向きを更新
 	m_object[PLAYER_PARTS_BODY].setRotateY(XMConvertToRadians(m_Rotation.y));
-	m_object[PLAYER_PARTS_HEAD].setRotateY(XMConvertToRadians(m_Rotation.y * 1.2f));
+	//m_object[PLAYER_PARTS_HEAD].setRotateY(XMConvertToRadians(m_Rotation.y * 1.2f));
 
 	// Enterを押したら
 	if (keyState.Enter)
@@ -117,6 +118,22 @@ void Player::update()
 	{
 		fall();
 	}
+
+	// スペースを押したら
+	if (keyState.Space)
+	{
+		if (!isfire)
+		{
+			fireBullet();
+			isfire = true;
+		}
+		else
+		{
+			resetBullet();
+			isfire = false;
+		}
+	}
+
 
 	// 重力を掛ける(仮)
 	if (m_object[PLAYER_PARTS_BASE].getTranse().y > 0)
@@ -136,6 +153,15 @@ void Player::update()
 	m_object[PLAYER_PARTS_WING].update();
 
 	m_frame++;
+
+
+	// 弾丸が進む処理
+	if(isfire)
+	{
+		Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_HEAD].getRotate().y);
+		m_bulltVel = Vector3::TransformNormal(m_bulltVel, rotmat);
+		m_object[PLAYER_PARTS_HEAD].setTranse(m_object[PLAYER_PARTS_HEAD].getTranse() - m_bulltVel);
+	}
 }
 
 void Player::render()
@@ -154,6 +180,40 @@ Vector3 Player::getTrance()
 DirectX::SimpleMath::Vector3 Player::getRotation()
 {
 	return m_object[PLAYER_PARTS_BASE].getRotate();
+}
+
+/// <summary>
+/// 球を飛ばす
+/// </summary>
+void Player::fireBullet()
+{
+	if (isfire)return;
+
+	// ワールド行列を取得
+	Matrix worldm = m_object[PLAYER_PARTS_HEAD].getWorld();
+
+	// ワールド行列から各要素を取り出す
+	Vector3 scale;
+	Quaternion rotate;
+	Vector3 trans;
+	worldm.Decompose(scale, rotate, trans);
+
+	// 親子関係を解除してパーツを独立
+	m_object[PLAYER_PARTS_HEAD].setParent(nullptr);
+	m_object[PLAYER_PARTS_HEAD].setScale(scale);
+	m_object[PLAYER_PARTS_HEAD].setRotateQ(rotate);
+	m_object[PLAYER_PARTS_HEAD].setTranse(trans);
+
+	// 玉の速度を計算
+	m_bulltVel = Vector3(0.0f, 0.0f, 0.1f);
+	// 
+	m_bulltVel = Vector3::Transform(m_bulltVel, rotate);
+}
+
+void Player::resetBullet()
+{
+	m_object[PLAYER_PARTS_HEAD].setParent(&m_object[PLAYER_PARTS_BREAST]);
+	m_object[PLAYER_PARTS_HEAD].setTranse(Vector3(0.0f, 0.6f, 0.0f));
 }
 
 void Player::go()

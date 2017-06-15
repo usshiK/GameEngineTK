@@ -28,8 +28,9 @@ private:
 	// キーボード
 	DirectX::Keyboard* m_keyBoard;
 
-	// サインウェーブ
-	float sinWave(float t);
+	// 玉のスピード
+	DirectX::SimpleMath::Vector3 m_bulltVel;
+	bool isfire;
 public:
 	enum KEY_CODE
 	{
@@ -49,6 +50,11 @@ public:
 	DirectX::SimpleMath::Vector3 getTrance();
 	DirectX::SimpleMath::Vector3 getRotation();
 
+	// 球を飛ばす
+	void fireBullet();
+	// 球を戻す
+	void resetBullet();
+
 private:
 	void go();
 	void back();
@@ -56,5 +62,9 @@ private:
 	void turnLeft();
 	void fly();
 	void fall();
+
+
+	// サインウェーブ
+	float sinWave(float t);
 };
 
