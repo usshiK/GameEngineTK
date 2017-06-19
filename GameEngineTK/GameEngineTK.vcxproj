@@ -164,6 +164,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Colision.h" />
+    <ClInclude Include="CollisionNode.h" />
     <ClInclude Include="DebugCamera.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="FollowCamera.h" />
@@ -176,6 +177,7 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Colision.cpp" />
+    <ClCompile Include="CollisionNode.cpp" />
     <ClCompile Include="DebugCamera.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="FollowCamera.cpp" />
@@ -214,6 +216,7 @@
     <MeshContentTask Include="Assets\robotHead.FBX" />
     <MeshContentTask Include="Assets\robotWing.FBX" />
     <MeshContentTask Include="Assets\sky.FBX" />
+    <MeshContentTask Include="Assets\sphereNode.FBX" />
     <MeshContentTask Include="Assets\teaPod.FBX" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

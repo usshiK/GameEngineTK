@@ -38,6 +38,7 @@
       <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="Colision.h" />
+    <ClInclude Include="CollisionNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -62,6 +63,7 @@
       <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="Colision.cpp" />
+    <ClCompile Include="CollisionNode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -105,6 +107,9 @@
       <Filter>Assets</Filter>
     </MeshContentTask>
     <MeshContentTask Include="Assets\robotHead.FBX">
+      <Filter>Assets</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\sphereNode.FBX">
       <Filter>Assets</Filter>
     </MeshContentTask>
   </ItemGroup>

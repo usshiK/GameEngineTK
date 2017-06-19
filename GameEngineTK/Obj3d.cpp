@@ -70,25 +70,25 @@ void Obj3d::setRotateZ(const float rotate)
 }
 
 // 平行移動
-void Obj3d::setTranse(const Vector3& transe)
+void Obj3d::setTrans(const Vector3& transe)
 {
 	m_transe = transe;
 }
 
 // 平行移動X
-void Obj3d::setTranseX(const float transe)
+void Obj3d::setTransX(const float transe)
 {
 	m_transe.x = transe;
 }
 
 // 平行移動Y
-void Obj3d::setTranseY(const float transe)
+void Obj3d::setTransY(const float transe)
 {
 	m_transe.y = transe;
 }
 
 // 平行移動Z
-void Obj3d::setTranseZ(const float transe)
+void Obj3d::setTransZ(const float transe)
 {
 	m_transe.z = transe;
 }
@@ -112,6 +112,20 @@ void Obj3d::initializeStatic(Camera * camera, Microsoft::WRL::ComPtr<ID3D11Devic
 	m_states = make_unique<CommonStates>(m_d3dDevice.Get());
 	m_factory = std::make_unique<EffectFactory>(m_d3dDevice.Get());
 	m_factory->SetDirectory(L"Resources");
+
+	//// 減算描画用のブレンドステートを作成
+	//D3D11_BLEND_DESC desc;
+	//desc.AlphaToCoverageEnable = false;
+	//desc.IndependentBlendEnable = false;
+	//desc.RenderTarget[0].BlendEnable = true;
+	//desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	//desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	//desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_REV_SUBTRACT;
+	//desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	//desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	//desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_REV_SUBTRACT;
+	//desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	//HRESULT ret = s_pDevice->CreateBlendState(&desc, &s_pBlendStateSubtract);
 }
 
 /// <summary>
@@ -197,6 +211,22 @@ void Obj3d::draw()
 
 }
 
+//void Obj3D::DrawSubtractive()
+//{
+//	if (m_pModel)
+//	{
+//		assert(s_pCamera);
+//		const Matrix& view = s_pCamera->GetViewmat();
+//		const Matrix& projection = s_pCamera->GetProjmat();
+//
+//		assert(s_pDeviceContext);
+//		assert(s_pStates);
+//
+//		// 減算描画用の設定関数を渡して描画
+//		m_pModel->Draw(s_pDeviceContext, *s_pStates, m_LocalWorld, view, projection, false, Obj3D::SetSubtractive);
+//	}
+//}
+
 /// <summary>
 /// モデルを読み込み
 /// </summary>
@@ -209,4 +239,45 @@ void Obj3d::LoadModel(const wchar_t * szFileName)
 		szFileName,
 		*m_factory
 	);
+}
+
+/**
+*	@brief オブジェクトのライティングを無効にする
+*/
+void Obj3d::DisableLighting()
+{
+	if (m_pModel)
+	{
+		// モデル内の全メッシュ分回す
+		ModelMesh::Collection::const_iterator it_mesh = m_pModel->meshes.begin();
+		for (; it_mesh != m_pModel->meshes.end(); it_mesh++)
+		{
+			ModelMesh* modelmesh = it_mesh->get();
+			assert(modelmesh);
+
+			// メッシュ内の全メッシュパーツ分回す
+			std::vector<std::unique_ptr<ModelMeshPart>>::iterator it_meshpart = modelmesh->meshParts.begin();
+			for (; it_meshpart != modelmesh->meshParts.end(); it_meshpart++)
+			{
+				ModelMeshPart* meshpart = it_meshpart->get();
+				assert(meshpart);
+
+				// メッシュパーツにセットされたエフェクトをBasicEffectとして取得
+				std::shared_ptr<IEffect> ieff = meshpart->effect;
+				BasicEffect* eff = dynamic_cast<BasicEffect*>(ieff.get());
+				if (eff != nullptr)
+				{
+					// 自己発光を最大値に
+					eff->SetEmissiveColor(Vector3(1, 1, 1));
+
+					// エフェクトに含む全ての平行光源分について処理する
+					for (int i = 0; i < BasicEffect::MaxDirectionalLights; i++)
+					{
+						// ライトを無効にする
+						eff->SetLightEnabled(i, false);
+					}
+				}
+			}
+		}
+	}
 }

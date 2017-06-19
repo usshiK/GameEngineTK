@@ -3,6 +3,7 @@
 #include <Keyboard.h>
 #include <vector>
 #include "Obj3d.h"
+#include "CollisionNode.h"
 
 class Player
 {
@@ -31,6 +32,10 @@ private:
 	// 玉のスピード
 	DirectX::SimpleMath::Vector3 m_bulltVel;
 	bool isfire;
+
+	// 球状あたり判定ノード
+	sphereNode m_CollisionNodeBullet;
+
 public:
 	enum KEY_CODE
 	{
@@ -43,6 +48,7 @@ public:
 
 	Player();
 	~Player();
+
 	void initialize(DirectX::SimpleMath::Vector3 detoultPos, DirectX::Keyboard* keyBoard);
 	void update();
 	void render();
@@ -54,6 +60,10 @@ public:
 	void fireBullet();
 	// 球を戻す
 	void resetBullet();
+
+	/*** ↓ゲッター↓ ***/
+	// あたり判定ノードの取得
+	const sphereNode& getCollisionNodeBullet();
 
 private:
 	void go();

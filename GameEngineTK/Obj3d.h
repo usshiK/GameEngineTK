@@ -34,10 +34,10 @@ public:
 	void setRotateQ(const DirectX::SimpleMath::Quaternion& rotate) { m_rotateQ = rotate; }
 
 	// 平行移動
-	void setTranse(const DirectX::SimpleMath::Vector3& transe);
-	void setTranseX(const float transe);
-	void setTranseY(const float transe);
-	void setTranseZ(const float transe);
+	void setTrans(const DirectX::SimpleMath::Vector3& transe);
+	void setTransX(const float transe);
+	void setTransY(const float transe);
+	void setTransZ(const float transe);
 
 	// 親オブジェクト
 	void setParent(Obj3d* parent);
@@ -65,6 +65,10 @@ public:
 
 	// 描画
 	void draw();
+	// 減算描画での描画（影用）
+	void DrawSubtractive();
+
+	void DisableLighting();
 
 	// モデルの読み込み
 	void LoadModel(const wchar_t* szFileName);

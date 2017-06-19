@@ -1,10 +1,12 @@
 #pragma once
 #include <vector>
 #include "Obj3d.h"
+#include "CollisionNode.h"
 
 class Enemy
 {
 private:
+	// AIのID
 	enum AI_CODE
 	{
 		GO,
@@ -15,7 +17,7 @@ private:
 		AI_CODE_NUM
 	};
 
-	// パーツに番号を付ける
+	// パーツID
 	enum ENEMY_PARTS
 	{
 		ENEMY_PARTS_BASE,	// キャタピラ
@@ -27,16 +29,21 @@ private:
 		ENEMY_PARTS_NUM
 	};
 
-	int m_frame;								// フレーム数を数える
+	// フレーム数を数える
+	int m_frame;				
 
-	DirectX::SimpleMath::Vector3 m_Rotation;	// 回転角
+	// 回転角
+	DirectX::SimpleMath::Vector3 m_Rotation;	
 
-	std::vector<Obj3d> m_object;				// 自身のモデル達
+	// 自身のモデル達
+	std::vector<Obj3d> m_object;				
 
-	Enemy::AI_CODE m_ai;
+	// 現在のAI
+	AI_CODE m_ai;
 
-	// サインウェーブ
-	float sinWave(float t);
+	//　球状あたり判定ノード
+	sphereNode m_colissionNodeBullet;
+
 public:
 	Enemy();
 	~Enemy();
@@ -45,8 +52,15 @@ public:
 	void render();
 
 	void action();
-	DirectX::SimpleMath::Vector3 getTrance();
-	DirectX::SimpleMath::Vector3 getRotation();
+
+	/*↓ゲッター↓*/
+	const DirectX::SimpleMath::Vector3& getTrance();	// トランス
+	const DirectX::SimpleMath::Vector3& getRotation();	// 回転角
+	const sphereNode& getColissionNodeBullet();	// 球状あたり判定ノード
+
+private:
+	// サインウェーブ
+	float sinWave(float t);
 };
 
 #pragma once

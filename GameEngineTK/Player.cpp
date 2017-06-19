@@ -19,6 +19,7 @@ Player::~Player()
 
 void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos,Keyboard* keyBoard)
 {
+	// モデルのロード
 	m_object.resize(PLAYER_PARTS_NUM);	// 配列の個数をパーツの個数に増やす
 	m_object[PLAYER_PARTS_BASE].LoadModel(L"Resources/robotBase.cmo");
 	m_object[PLAYER_PARTS_BODY].LoadModel(L"Resources/robotBody.cmo");
@@ -33,14 +34,14 @@ void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos,Keyboard* keyBoa
 	m_object[PLAYER_PARTS_WING].setParent(&m_object[PLAYER_PARTS_BREAST]);
 
 	// 親からのオフセット(親から位置をずらす)
-	m_object[PLAYER_PARTS_BODY].setTranse(Vector3(0.0f, 0.35f, 0.0f));
-	m_object[PLAYER_PARTS_BREAST].setTranse(Vector3(0.0f, 0.4f, 0.0f));
-	m_object[PLAYER_PARTS_HEAD].setTranse(Vector3(0.0f, 0.6f, 0.0f));
-	m_object[PLAYER_PARTS_WING].setTranse(Vector3(0.0f, 0.3f, 0.5f));
+	m_object[PLAYER_PARTS_BODY].setTrans(Vector3(0.0f, 0.35f, 0.0f));
+	m_object[PLAYER_PARTS_BREAST].setTrans(Vector3(0.0f, 0.4f, 0.0f));
+	m_object[PLAYER_PARTS_HEAD].setTrans(Vector3(0.0f, 0.6f, 0.0f));
+	m_object[PLAYER_PARTS_WING].setTrans(Vector3(0.0f, 0.3f, 0.5f));
 	m_object[PLAYER_PARTS_WING].setRotate(Vector3(XMConvertToRadians(270), XMConvertToRadians(180), 0.0f));
 
 	// 初期位置に配置
-	m_object[PLAYER_PARTS_BASE].setTranse(detoultPos);
+	m_object[PLAYER_PARTS_BASE].setTrans(detoultPos);
 
 	// キーボード初期化
 	m_keyBoard = keyBoard;
@@ -48,6 +49,13 @@ void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos,Keyboard* keyBoa
 	// フレームカウントを初期化
 	m_frame = 0;
 
+	// 武器のあたり判定ノードの初期化
+	{
+		m_CollisionNodeBullet.initialize();								// 初期化
+		m_CollisionNodeBullet.setParent(&m_object[PLAYER_PARTS_HEAD]);	// 頭パーツにセット
+		m_CollisionNodeBullet.setTrans(Vector3(0,0,0));					// オフセットをセット
+		m_CollisionNodeBullet.setLocalRadius(0.3f);						// 半径
+	}
 }
 
 void Player::update()
@@ -85,8 +93,9 @@ void Player::update()
 	{
 		turnRight();
 	}
-	else// 振り向きを直す
+	else
 	{
+		// 振り向きを直す
 		if (m_Rotation.y < 0.0f)
 		{
 			m_Rotation.y += 0.5f;
@@ -98,8 +107,9 @@ void Player::update()
 	{
 		turnLeft();
 	}
-	else// 振り向きを直す
+	else
 	{
+		// 振り向きを直す
 		if (m_Rotation.y > 0.0f)
 		{
 			m_Rotation.y -= 0.5f;
@@ -138,19 +148,24 @@ void Player::update()
 	// 重力を掛ける(仮)
 	if (m_object[PLAYER_PARTS_BASE].getTranse().y > 0)
 	{
-		m_object[PLAYER_PARTS_BASE].setTranseY(m_object[PLAYER_PARTS_BASE].getTranse().y - 0.2f);
+		m_object[PLAYER_PARTS_BASE].setTransY(m_object[PLAYER_PARTS_BASE].getTranse().y - 0.2f);
 	}
 	else
 	{
-		m_object[PLAYER_PARTS_BASE].setTranseY(0);
+		m_object[PLAYER_PARTS_BASE].setTransY(0);
 	}
 
-	// モデル達の更新
-	m_object[PLAYER_PARTS_BASE].update();
-	m_object[PLAYER_PARTS_BODY].update();
-	m_object[PLAYER_PARTS_BREAST].update();
-	m_object[PLAYER_PARTS_HEAD].update();
-	m_object[PLAYER_PARTS_WING].update();
+	{
+		// モデル達の更新
+		m_object[PLAYER_PARTS_BASE].update();
+		m_object[PLAYER_PARTS_BODY].update();
+		m_object[PLAYER_PARTS_BREAST].update();
+		m_object[PLAYER_PARTS_HEAD].update();
+		m_object[PLAYER_PARTS_WING].update();
+
+		// あたり判定ノードの更新
+		m_CollisionNodeBullet.update();
+	}
 
 	m_frame++;
 
@@ -160,7 +175,7 @@ void Player::update()
 	{
 		Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_HEAD].getRotate().y);
 		m_bulltVel = Vector3::TransformNormal(m_bulltVel, rotmat);
-		m_object[PLAYER_PARTS_HEAD].setTranse(m_object[PLAYER_PARTS_HEAD].getTranse() - m_bulltVel);
+		m_object[PLAYER_PARTS_HEAD].setTrans(m_object[PLAYER_PARTS_HEAD].getTranse() - m_bulltVel);
 	}
 }
 
@@ -170,6 +185,9 @@ void Player::render()
 	{
 		it->draw();
 	}
+
+	// あたり判定ノードの描画
+	m_CollisionNodeBullet.draw();
 }
 
 Vector3 Player::getTrance()
@@ -202,7 +220,7 @@ void Player::fireBullet()
 	m_object[PLAYER_PARTS_HEAD].setParent(nullptr);
 	m_object[PLAYER_PARTS_HEAD].setScale(scale);
 	m_object[PLAYER_PARTS_HEAD].setRotateQ(rotate);
-	m_object[PLAYER_PARTS_HEAD].setTranse(trans);
+	m_object[PLAYER_PARTS_HEAD].setTrans(trans);
 
 	// 玉の速度を計算
 	m_bulltVel = Vector3(0.0f, 0.0f, 0.1f);
@@ -213,7 +231,13 @@ void Player::fireBullet()
 void Player::resetBullet()
 {
 	m_object[PLAYER_PARTS_HEAD].setParent(&m_object[PLAYER_PARTS_BREAST]);
-	m_object[PLAYER_PARTS_HEAD].setTranse(Vector3(0.0f, 0.6f, 0.0f));
+	m_object[PLAYER_PARTS_HEAD].setTrans(Vector3(0.0f, 0.6f, 0.0f));
+}
+
+
+const sphereNode & Player::getCollisionNodeBullet()
+{
+	return m_CollisionNodeBullet;
 }
 
 void Player::go()
@@ -222,7 +246,7 @@ void Player::go()
 	Vector3 moveV = Vector3(0.0f, 0.0f, 0.1f);
 	Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_BASE].getRotate().y);
 	moveV = Vector3::TransformNormal(moveV, rotmat);
-	m_object[PLAYER_PARTS_BASE].setTranse(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
+	m_object[PLAYER_PARTS_BASE].setTrans(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
 
 	// 前かがみにする
 	if (m_Rotation.x >= -15.0f)
@@ -237,7 +261,7 @@ void Player::back()
 	Vector3 moveV = Vector3(0.0f, 0.0f, -0.1f);
 	Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_BASE].getRotate().y);
 	moveV = Vector3::TransformNormal(moveV, rotmat);
-	m_object[PLAYER_PARTS_BASE].setTranse(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
+	m_object[PLAYER_PARTS_BASE].setTrans(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
 
 	// 後ろを見る
 	if (m_Rotation.y <= 45.0f)
@@ -277,13 +301,13 @@ void Player::turnLeft()
 void Player::fly()
 {
 	// 上に飛ばす
-	m_object[PLAYER_PARTS_BASE].setTranseY(m_object[PLAYER_PARTS_BASE].getTranse().y + 0.25f);
+	m_object[PLAYER_PARTS_BASE].setTransY(m_object[PLAYER_PARTS_BASE].getTranse().y + 0.25f);
 
 	// 翼を回転
 	m_object[PLAYER_PARTS_WING].setRotateY(m_object[PLAYER_PARTS_WING].getRotate().y + 0.6f);
 	m_object[PLAYER_PARTS_WING].setRotateX(0);
-	m_object[PLAYER_PARTS_WING].setTranseY(1.0f);
-	m_object[PLAYER_PARTS_WING].setTranseZ(0.0f);
+	m_object[PLAYER_PARTS_WING].setTransY(1.0f);
+	m_object[PLAYER_PARTS_WING].setTransZ(0.0f);
 }
 
 void Player::fall()
@@ -294,17 +318,17 @@ void Player::fall()
 		// 翼をもとに戻す
 		m_object[PLAYER_PARTS_WING].setRotateY(0);
 		m_object[PLAYER_PARTS_WING].setRotateX(90);
-		m_object[PLAYER_PARTS_WING].setTranseZ(0.5f);
+		m_object[PLAYER_PARTS_WING].setTransZ(0.5f);
 
-		m_object[PLAYER_PARTS_WING].setTranseY(sinWave(m_frame / 20.0f) / 10.0f + 0.2f);
+		m_object[PLAYER_PARTS_WING].setTransY(sinWave(m_frame / 20.0f) / 10.0f + 0.2f);
 	}
 	else
 	{
 		// 翼を回転
 		m_object[PLAYER_PARTS_WING].setRotateY(m_object[PLAYER_PARTS_WING].getRotate().y + 0.2f);
 		m_object[PLAYER_PARTS_WING].setRotateX(0);
-		m_object[PLAYER_PARTS_WING].setTranseY(1.0f);
-		m_object[PLAYER_PARTS_WING].setTranseZ(0.0f);
+		m_object[PLAYER_PARTS_WING].setTransY(1.0f);
+		m_object[PLAYER_PARTS_WING].setTransZ(0.0f);
 	}
 }
 
