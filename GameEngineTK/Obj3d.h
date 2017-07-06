@@ -8,6 +8,7 @@
 #include <Model.h>
 #include <Effects.h>
 #include <CommonStates.h>
+//#include <VertexTypes.h>
 
 #include <memory>
 #include <windows.h>
@@ -22,9 +23,11 @@ public:
 	//virtual ~Obj3d();
 
 	// セッター
+	// ワールド座標
+	void setWorld(const DirectX::SimpleMath::Matrix world);
 	// スケーリング
 	void setScale(const DirectX::SimpleMath::Vector3& scale);
-
+	void setScaleY(const float& scale);
 	// 回転角
 	void setRotate(const DirectX::SimpleMath::Vector3& rotate);
 	void setRotateX(const float rotate);
@@ -32,33 +35,29 @@ public:
 	void setRotateZ(const float rotate);
 	// 回転角(クォータニオン)
 	void setRotateQ(const DirectX::SimpleMath::Quaternion& rotate) { m_rotateQ = rotate; }
-
 	// 平行移動
 	void setTrans(const DirectX::SimpleMath::Vector3& transe);
 	void setTransX(const float transe);
 	void setTransY(const float transe);
 	void setTransZ(const float transe);
-
 	// 親オブジェクト
 	void setParent(Obj3d* parent);
 
 	// ゲッター
-	// ワールド行列
-	const DirectX::SimpleMath::Matrix& getWorld();
+	const DirectX::SimpleMath::Matrix& getWorld();	// ワールド行列
+	const DirectX::SimpleMath::Vector3& getScale();	// スケーリング
+	const DirectX::SimpleMath::Vector3& getRotate();// 回転角
+	const DirectX::SimpleMath::Vector3& getTrans();	// 平行移動
+	Obj3d* getParent();								// 親オブジェクト
 
-	// 回転角
-	const DirectX::SimpleMath::Vector3& getRotate();
-
-	// 平行移動
-	const DirectX::SimpleMath::Vector3& getTranse();
-
-	// 親オブジェクト
-	Obj3d* getParent();
 
 	// 静的メンバ変数を初期化する 
 	static void initializeStatic(Camera* camera,
 		Microsoft::WRL::ComPtr<ID3D11Device> d3dDevice,
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3dContext);
+
+	// 減算描画を設定
+	static void SetSubtractive();
 
 	// 更新
 	void update();
@@ -109,5 +108,8 @@ private:
 
 	// エフェクトファクトリー
 	static std::unique_ptr<DirectX::EffectFactory> m_factory;
+
+	// ブレンドステイト
+	static ID3D11BlendState* m_pBlendStateSubtract;
 };
 

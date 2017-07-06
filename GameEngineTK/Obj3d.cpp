@@ -22,6 +22,9 @@ Microsoft::WRL::ComPtr<ID3D11DeviceContext> Obj3d::m_d3dContext;
 // エフェクトファクトリー
 std::unique_ptr<DirectX::EffectFactory>		Obj3d::m_factory;
 
+// ブレンドステイと
+ID3D11BlendState* Obj3d::m_pBlendStateSubtract;
+
 Obj3d::Obj3d()
 	:m_parent(nullptr)
 	,m_scale(Vector3(1,1,1))
@@ -31,18 +34,26 @@ Obj3d::Obj3d()
 }
 
 
-//Obj3d::~Obj3d()
-//{
-//}
 
 /// <summary>
 /// ↓セッター↓
 /// </summary>
 
+// ワールド座標
+void Obj3d::setWorld(const Matrix world)
+{
+	m_world = world;
+}
+
 // スケーリング
 void Obj3d::setScale(const Vector3& scale)
 {
 	m_scale = scale;
+}
+
+void Obj3d::setScaleY(const float & scale)
+{
+	m_scale.y = scale;
 }
 
 // 回転角
@@ -99,34 +110,7 @@ void Obj3d::setParent(Obj3d * parent)
 	m_parent = parent;
 }
 
-/// <summary>
-/// ↑セッター↑
-/// </summary>
 
-// static変数を初期化
-void Obj3d::initializeStatic(Camera * camera, Microsoft::WRL::ComPtr<ID3D11Device> d3dDevice, Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3dContext)
-{
-	m_pCamera = camera;
-	m_d3dDevice = d3dDevice;
-	m_d3dContext = d3dContext;
-	m_states = make_unique<CommonStates>(m_d3dDevice.Get());
-	m_factory = std::make_unique<EffectFactory>(m_d3dDevice.Get());
-	m_factory->SetDirectory(L"Resources");
-
-	//// 減算描画用のブレンドステートを作成
-	//D3D11_BLEND_DESC desc;
-	//desc.AlphaToCoverageEnable = false;
-	//desc.IndependentBlendEnable = false;
-	//desc.RenderTarget[0].BlendEnable = true;
-	//desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-	//desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-	//desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_REV_SUBTRACT;
-	//desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	//desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-	//desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_REV_SUBTRACT;
-	//desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-	//HRESULT ret = s_pDevice->CreateBlendState(&desc, &s_pBlendStateSubtract);
-}
 
 /// <summary>
 /// ↓ゲッター↓
@@ -138,6 +122,11 @@ const Matrix& Obj3d::getWorld()
 	return m_world;
 }
 
+const DirectX::SimpleMath::Vector3 & Obj3d::getScale()
+{
+	return m_scale;
+}
+
 // 回転角
 const Vector3& Obj3d::getRotate()
 {
@@ -145,7 +134,7 @@ const Vector3& Obj3d::getRotate()
 }
 
 // 平行移動
-const Vector3& Obj3d::getTranse()
+const Vector3& Obj3d::getTrans()
 {
 	return m_transe;
 }
@@ -156,9 +145,39 @@ Obj3d * Obj3d::getParent()
 	return m_parent;
 }
 
+
+// static変数を初期化
+void Obj3d::initializeStatic(Camera * camera, Microsoft::WRL::ComPtr<ID3D11Device> d3dDevice, Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3dContext)
+{
+	m_pCamera = camera;
+	m_d3dDevice = d3dDevice;
+	m_d3dContext = d3dContext;
+	m_states = make_unique<CommonStates>(m_d3dDevice.Get());
+	m_factory = std::make_unique<EffectFactory>(m_d3dDevice.Get());
+	m_factory->SetDirectory(L"Resources");
+
+	// 減算描画用のブレンドステートを作成
+	D3D11_BLEND_DESC desc;
+	desc.AlphaToCoverageEnable = false;
+	desc.IndependentBlendEnable = false;
+	desc.RenderTarget[0].BlendEnable = true;
+	desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_REV_SUBTRACT;
+	desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_REV_SUBTRACT;
+	desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	HRESULT ret = m_d3dDevice->CreateBlendState(&desc, &m_pBlendStateSubtract);
+}
+
 /// <summary>
-/// ↑ゲッター↑
+/// 減算描画を設定
 /// </summary>
+void Obj3d::SetSubtractive()
+{
+	m_d3dContext->OMSetBlendState(m_pBlendStateSubtract, nullptr, 0xfffff);
+}
 
 /// <summary>
 /// 更新処理
@@ -211,39 +230,22 @@ void Obj3d::draw()
 
 }
 
-//void Obj3D::DrawSubtractive()
-//{
-//	if (m_pModel)
-//	{
-//		assert(s_pCamera);
-//		const Matrix& view = s_pCamera->GetViewmat();
-//		const Matrix& projection = s_pCamera->GetProjmat();
-//
-//		assert(s_pDeviceContext);
-//		assert(s_pStates);
-//
-//		// 減算描画用の設定関数を渡して描画
-//		m_pModel->Draw(s_pDeviceContext, *s_pStates, m_LocalWorld, view, projection, false, Obj3D::SetSubtractive);
-//	}
-//}
-
-/// <summary>
-/// モデルを読み込み
-/// </summary>
-/// <param name="szFileName">ファイル名</param>
-void Obj3d::LoadModel(const wchar_t * szFileName)
+void Obj3d::DrawSubtractive()
 {
-	m_pModel= Model::CreateFromCMO(
-		m_d3dDevice.Get(),
-		//L"Resources/robotBase.cmo",
-		szFileName,
-		*m_factory
-	);
+	if (m_pModel)
+	{
+		assert(m_pCamera);
+		const Matrix& view = m_pCamera->getViewMatrix();
+		const Matrix& projection = m_pCamera->getProjMatrix();
+
+		assert(m_d3dContext.Get());
+		assert(m_states);
+
+		// 減算描画用の設定関数を渡して描画
+		m_pModel->Draw(m_d3dContext.Get(), *m_states, m_world, view, projection, false, Obj3d::SetSubtractive);
+	}
 }
 
-/**
-*	@brief オブジェクトのライティングを無効にする
-*/
 void Obj3d::DisableLighting()
 {
 	if (m_pModel)
@@ -280,4 +282,16 @@ void Obj3d::DisableLighting()
 			}
 		}
 	}
+}
+/// <summary>
+/// モデルを読み込み
+/// </summary>
+/// <param name="szFileName">ファイル名</param>
+void Obj3d::LoadModel(const wchar_t * szFileName)
+{
+	m_pModel= Model::CreateFromCMO(
+		m_d3dDevice.Get(),
+		szFileName,
+		*m_factory
+	);
 }

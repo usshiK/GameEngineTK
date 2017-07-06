@@ -12,17 +12,24 @@ class CollisionNode
 {
 public:
 	/*↓いつもの↓*/
-	virtual void initialize() = 0;// 初期化(主にモデルの読み込み)
-	virtual void update() = 0;	  // 更新
-	virtual void draw() = 0;	  // 描画
+	virtual void initialize();	// 初期化(主にモデルの読み込み)
+	virtual void update() = 0;	// 更新
+	virtual void draw() = 0;	// 描画
 
 	/*↓セッター↓*/
 	void setParent(Obj3d* parent);								// 親
 	void setTrans(const DirectX::SimpleMath::Vector3& trans);	// 親からのオフセット
+	void setDebugVisible(bool flag = !m_debugVisible);										// デバッグ表示オブジェクトの表示,非表示切り替え
+
+	/*↓ゲッター↓*/
+	// デバッグモデルを表示しているかを取得
+	static bool GetDebugVisible();
 
 protected:
 	// デバッグ表示オブジェクト
 	Obj3d m_obj;
+	// デバッグ表示オブジェクトを表示するかのフラグ
+	static bool m_debugVisible;
 
 	// 親からのオフセット
 	DirectX::SimpleMath::Vector3 m_trans;

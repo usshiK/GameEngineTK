@@ -43,6 +43,11 @@ void Player::initialize(DirectX::SimpleMath::Vector3 detoultPos,Keyboard* keyBoa
 	// 初期位置に配置
 	m_object[PLAYER_PARTS_BASE].setTrans(detoultPos);
 
+	// 影の初期化
+	m_shadow.LoadModel(L"Resources/shadow.cmo");
+	m_shadow.setTrans(m_object[PLAYER_PARTS_BASE].getTrans());
+	m_shadow.setTransY(0.01f);
+
 	// キーボード初期化
 	m_keyBoard = keyBoard;
 
@@ -63,6 +68,7 @@ void Player::update()
 
 	// キーボードの状態を取得
 	Keyboard::State keyState = m_keyBoard->GetState();
+	m_KeyboardTracker.Update(keyState);
 
 	// Wを押したら
 	if (keyState.W)
@@ -87,6 +93,11 @@ void Player::update()
 
 	// 前かがみを更新
 	m_object[PLAYER_PARTS_BODY].setRotateX(XMConvertToRadians(m_Rotation.x));
+	if (!isfire)
+	{
+		// 首は正面を向く
+		m_object[PLAYER_PARTS_HEAD].setRotateX(-(XMConvertToRadians(m_Rotation.x)));
+	}
 
 	// Dを押したら
 	if (keyState.D)
@@ -119,9 +130,10 @@ void Player::update()
 	m_object[PLAYER_PARTS_BODY].setRotateY(XMConvertToRadians(m_Rotation.y));
 	//m_object[PLAYER_PARTS_HEAD].setRotateY(XMConvertToRadians(m_Rotation.y * 1.2f));
 
-	// Enterを押したら
-	if (keyState.Enter)
+	// Kを押したら
+	if (keyState.K)
 	{
+		// 飛行
 		fly();
 	}
 	else
@@ -129,31 +141,40 @@ void Player::update()
 		fall();
 	}
 
-	// スペースを押したら
-	if (keyState.Space)
+	// Jを押したら
+	if (m_KeyboardTracker.IsKeyPressed(Keyboard::Keys::J))
 	{
 		if (!isfire)
 		{
+			// 弾発射
 			fireBullet();
-			isfire = true;
 		}
 		else
 		{
 			resetBullet();
-			isfire = false;
 		}
+	}
+
+	// spaceを押したら
+	if (m_KeyboardTracker.IsKeyPressed(Keyboard::Keys::Space))
+	{
+		m_CollisionNodeBullet.setDebugVisible();
 	}
 
 
 	// 重力を掛ける(仮)
-	if (m_object[PLAYER_PARTS_BASE].getTranse().y > 0)
+	if (m_object[PLAYER_PARTS_BASE].getTrans().y > 0)
 	{
-		m_object[PLAYER_PARTS_BASE].setTransY(m_object[PLAYER_PARTS_BASE].getTranse().y - 0.2f);
+		m_object[PLAYER_PARTS_BASE].setTransY(m_object[PLAYER_PARTS_BASE].getTrans().y - 0.2f);
 	}
 	else
 	{
 		m_object[PLAYER_PARTS_BASE].setTransY(0);
 	}
+
+	// 影にプレイヤーを追わせる
+	m_shadow.setTrans(m_object[PLAYER_PARTS_BASE].getTrans());
+	m_shadow.setTransY(0.01f);
 
 	{
 		// モデル達の更新
@@ -162,6 +183,9 @@ void Player::update()
 		m_object[PLAYER_PARTS_BREAST].update();
 		m_object[PLAYER_PARTS_HEAD].update();
 		m_object[PLAYER_PARTS_WING].update();
+
+		// 影の更新
+		m_shadow.update();
 
 		// あたり判定ノードの更新
 		m_CollisionNodeBullet.update();
@@ -174,17 +198,22 @@ void Player::update()
 	if(isfire)
 	{
 		Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_HEAD].getRotate().y);
-		m_bulltVel = Vector3::TransformNormal(m_bulltVel, rotmat);
-		m_object[PLAYER_PARTS_HEAD].setTrans(m_object[PLAYER_PARTS_HEAD].getTranse() - m_bulltVel);
+		m_bulltVec = Vector3::TransformNormal(m_bulltVec, rotmat);
+		m_object[PLAYER_PARTS_HEAD].setTrans(m_object[PLAYER_PARTS_HEAD].getTrans() - m_bulltVec);
 	}
+
 }
 
 void Player::render()
 {
+	// 本体
 	for (std::vector<Obj3d>::iterator it = m_object.begin(); it != m_object.end(); it++)
 	{
 		it->draw();
 	}
+
+	// 影
+	m_shadow.DrawSubtractive();
 
 	// あたり判定ノードの描画
 	m_CollisionNodeBullet.draw();
@@ -192,7 +221,7 @@ void Player::render()
 
 Vector3 Player::getTrance()
 {
-	return m_object[PLAYER_PARTS_BASE].getTranse();
+	return m_object[PLAYER_PARTS_BASE].getTrans();
 }
 
 DirectX::SimpleMath::Vector3 Player::getRotation()
@@ -223,15 +252,20 @@ void Player::fireBullet()
 	m_object[PLAYER_PARTS_HEAD].setTrans(trans);
 
 	// 玉の速度を計算
-	m_bulltVel = Vector3(0.0f, 0.0f, 0.1f);
+	m_bulltVec = Vector3(0.0f, 0.0f, 0.5f);
 	// 
-	m_bulltVel = Vector3::Transform(m_bulltVel, rotate);
+	m_bulltVec = Vector3::Transform(m_bulltVec, rotate);
+
+
+	isfire = true;
 }
 
 void Player::resetBullet()
 {
 	m_object[PLAYER_PARTS_HEAD].setParent(&m_object[PLAYER_PARTS_BREAST]);
 	m_object[PLAYER_PARTS_HEAD].setTrans(Vector3(0.0f, 0.6f, 0.0f));
+
+	isfire = false;
 }
 
 
@@ -246,7 +280,7 @@ void Player::go()
 	Vector3 moveV = Vector3(0.0f, 0.0f, 0.1f);
 	Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_BASE].getRotate().y);
 	moveV = Vector3::TransformNormal(moveV, rotmat);
-	m_object[PLAYER_PARTS_BASE].setTrans(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
+	m_object[PLAYER_PARTS_BASE].setTrans(m_object[PLAYER_PARTS_BASE].getTrans() - moveV);
 
 	// 前かがみにする
 	if (m_Rotation.x >= -15.0f)
@@ -261,7 +295,7 @@ void Player::back()
 	Vector3 moveV = Vector3(0.0f, 0.0f, -0.1f);
 	Matrix rotmat = Matrix::CreateRotationY(m_object[PLAYER_PARTS_BASE].getRotate().y);
 	moveV = Vector3::TransformNormal(moveV, rotmat);
-	m_object[PLAYER_PARTS_BASE].setTrans(m_object[PLAYER_PARTS_BASE].getTranse() - moveV);
+	m_object[PLAYER_PARTS_BASE].setTrans(m_object[PLAYER_PARTS_BASE].getTrans() - moveV);
 
 	// 後ろを見る
 	if (m_Rotation.y <= 45.0f)
@@ -301,7 +335,7 @@ void Player::turnLeft()
 void Player::fly()
 {
 	// 上に飛ばす
-	m_object[PLAYER_PARTS_BASE].setTransY(m_object[PLAYER_PARTS_BASE].getTranse().y + 0.25f);
+	m_object[PLAYER_PARTS_BASE].setTransY(m_object[PLAYER_PARTS_BASE].getTrans().y + 0.25f);
 
 	// 翼を回転
 	m_object[PLAYER_PARTS_WING].setRotateY(m_object[PLAYER_PARTS_WING].getRotate().y + 0.6f);
@@ -313,7 +347,7 @@ void Player::fly()
 void Player::fall()
 {
 	// 翼を上下させる
-	if (m_object[PLAYER_PARTS_BASE].getTranse().y <= 0.0f)
+	if (m_object[PLAYER_PARTS_BASE].getTrans().y <= 0.0f)
 	{
 		// 翼をもとに戻す
 		m_object[PLAYER_PARTS_WING].setRotateY(0);

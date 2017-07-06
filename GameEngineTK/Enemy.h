@@ -29,20 +29,22 @@ private:
 		ENEMY_PARTS_NUM
 	};
 
-	// フレーム数を数える
-	int m_frame;				
-
 	// 回転角
 	DirectX::SimpleMath::Vector3 m_Rotation;	
 
 	// 自身のモデル達
-	std::vector<Obj3d> m_object;				
+	std::vector<Obj3d> m_object;
+	// 影モデル
+	Obj3d m_shadow;
 
 	// 現在のAI
 	AI_CODE m_ai;
 
+	// フレーム数を数える
+	int m_frame;				
+
 	//　球状あたり判定ノード
-	sphereNode m_colissionNodeBullet;
+	sphereNode m_collisionNode;
 
 public:
 	Enemy();
@@ -51,12 +53,13 @@ public:
 	void update();
 	void render();
 
+	// AIごとに動きを設定
 	void action();
 
 	/*↓ゲッター↓*/
 	const DirectX::SimpleMath::Vector3& getTrance();	// トランス
 	const DirectX::SimpleMath::Vector3& getRotation();	// 回転角
-	const sphereNode& getColissionNodeBullet();	// 球状あたり判定ノード
+	sphereNode& getCollisionNode();	// 球状あたり判定ノード
 
 private:
 	// サインウェーブ

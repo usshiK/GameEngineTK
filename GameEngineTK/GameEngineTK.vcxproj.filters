@@ -14,6 +14,12 @@
     <Filter Include="Object\Caracter">
       <UniqueIdentifier>{45749db3-1d7a-4c60-a7bd-6f2753154c01}</UniqueIdentifier>
     </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{b6720396-0339-4347-8dd0-a60936c46c0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\Colision">
+      <UniqueIdentifier>{72bb72ee-e993-483b-9972-9b15f2b4b639}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -37,8 +43,17 @@
     <ClInclude Include="Obj3d.h">
       <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="Colision.h" />
-    <ClInclude Include="CollisionNode.h" />
+    <ClInclude Include="Colision.h">
+      <Filter>System\Colision</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionNode.h">
+      <Filter>System\Colision</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelEffect.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="LandShape.h" />
+    <ClInclude Include="LandShapeData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -62,14 +77,26 @@
     <ClCompile Include="Obj3d.cpp">
       <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="Colision.cpp" />
-    <ClCompile Include="CollisionNode.cpp" />
+    <ClCompile Include="Colision.cpp">
+      <Filter>System\Colision</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionNode.cpp">
+      <Filter>System\Colision</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelEffect.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="LandShape.cpp" />
+    <ClCompile Include="LandShapeData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\ground.png">
       <Filter>Assets</Filter>
     </Image>
   </ItemGroup>
@@ -110,6 +137,9 @@
       <Filter>Assets</Filter>
     </MeshContentTask>
     <MeshContentTask Include="Assets\sphereNode.FBX">
+      <Filter>Assets</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="Assets\shadow.FBX">
       <Filter>Assets</Filter>
     </MeshContentTask>
   </ItemGroup>

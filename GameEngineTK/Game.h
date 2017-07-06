@@ -16,12 +16,16 @@
 #include "DebugCamera.h"
 #include <Keyboard.h>
 
+#include "SpriteBatch.h"
+#include "WICTextureLoader.h"
+
 //#include"Camera.h"
 #include "FollowCamera.h"
 #include "Obj3d.h"
 #include "Player.h"
 #include "Enemy.h"
-
+#include "ModelEffect.h"
+#include "LandShape.h"
 
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
@@ -78,7 +82,7 @@ private:
     // Rendering loop timer.
     DX::StepTimer                                   m_timer;
 
-	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionNormal/*VertexPositionColor*/>>	m_batch;		// プリミティブバッチ
+	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionNormal>>	m_batch;		// プリミティブバッチ
 	std::unique_ptr<DirectX::BasicEffect>									m_effect;		// ベーシックエフェクト
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>								m_inputLayout;	// インプットレイアウト
 	std::unique_ptr<DirectX::CommonStates>									m_states;		// コモンステイト
@@ -95,10 +99,13 @@ private:
 	std::unique_ptr<DirectX::EffectFactory> m_factory;
 
 	// モデル
-	std::unique_ptr<DirectX::Model> m_ground;
+	//Obj3d m_ground;
 	Obj3d m_objSkyModel;
 	std::unique_ptr<DirectX::Model> m_kyuu;
 	std::unique_ptr<DirectX::Model> m_teaPod;
+	// 地形
+	LandShape m_landShape;
+
 
 	// 球のワールド行列
 #define KYUU_NUM 21
@@ -116,7 +123,7 @@ private:
 
 	// 敵ロボット
 	const int enemeyNum = 15;
-	Enemy m_enemy[15];
+	std::vector<std::unique_ptr<Enemy>>m_enemy;
 
 	// フレームを数える
 	int m_frame;
@@ -125,6 +132,7 @@ private:
 
 	// キーボード
 	std::unique_ptr<DirectX::Keyboard> m_keyBoard;
+	DirectX::Keyboard::KeyboardStateTracker m_KeyboardTracker;
 
 	// カメラ
 	std::unique_ptr<FollowCamera> m_camera;

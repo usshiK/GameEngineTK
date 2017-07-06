@@ -6,6 +6,8 @@
 #include "Game.h"
 #include <ctime>
 
+#include "Colision.h"
+
 extern void ExitGame();
 
 /* -- 名前空間を解放 ---- */
@@ -17,7 +19,6 @@ using Microsoft::WRL::ComPtr;
 
 
 
-float linaly(float t);
 /* -- プロトタイプ宣言 ---- */
 float sinWave(float t);
 
@@ -92,6 +93,15 @@ void Game::Initialize(HWND window, int width, int height)
 	// オブジェクトクラスの静的メンバを初期化
 	Obj3d::initializeStatic(m_camera.get(), m_d3dDevice, m_d3dContext);
 
+	// ランドシェイプ(地形)の初期化に必要な設定
+	LandShapeCommonDef lscDef;
+	lscDef.pDevice = m_d3dDevice.Get();
+	lscDef.pDeviceContext = m_d3dContext.Get();
+	lscDef.pCamera = m_camera.get();
+	// 地形の共通初期化
+	LandShape::InitializeCommon(lscDef);
+
+
 	// エフェクトファクトリー生成
 	m_factory = std::make_unique<EffectFactory>(m_d3dDevice.Get());
 
@@ -99,11 +109,9 @@ void Game::Initialize(HWND window, int width, int height)
 	m_factory->SetDirectory(L"Resources");
 
 	// モデルを読み込む
-	m_ground = Model::CreateFromCMO(
-		m_d3dDevice.Get(),
-		L"Resources/ground20m.cmo",
-		*m_factory
-	);
+	//m_ground.LoadModel(L"Resources/ground20m.cmo");
+	// 地形
+	m_landShape.Initialize(L"ground20m", L"ground20m");
 
 	// 空
 	m_objSkyModel.LoadModel(L"Resources/sky.cmo");
@@ -139,9 +147,11 @@ void Game::Initialize(HWND window, int width, int height)
 	m_camera->setTarget(m_player.get());
 
 	// 敵の初期化
+	m_enemy.resize(enemeyNum);
 	for (int i = 0; i < enemeyNum; i++)
 	{
-		m_enemy[i].initialize(Vector3(10.0f * i,0.0f,3.0f * i));
+		m_enemy[i] = std::make_unique<Enemy>();
+		m_enemy[i]->initialize(Vector3(rand() % 60 -30, 0.0f, rand() % 60 - 30));
 	}
 }
 
@@ -169,18 +179,81 @@ void Game::Update(DX::StepTimer const& timer)
 
 
 	// ゲームの毎フレーム処理
+	// キーボードの状態を取得
+	Keyboard::State keyState = m_keyBoard->GetState();
+	m_KeyboardTracker.Update(keyState);
 
+	// spaceを押したら
+ 	if (m_KeyboardTracker.IsKeyPressed(Keyboard::Keys::Space))
+	{
+		for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin(); it != m_enemy.end(); it++)
+		{
+			it->get()->getCollisionNode().setDebugVisible();
+		}
+	}
+
+	// プレイヤー更新
 	m_player->update();
 
-	for (int i = 0; i < enemeyNum; i++)
+	// 敵更新
+	for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin(); it != m_enemy.end(); it++)
 	{
-		m_enemy[i].update();
+		it->get()->update();
 	}
 
 	// カメラの更新
 	m_camera->update();
 	m_view = m_camera->getViewMatrix();
 	m_proj = m_camera->getProjMatrix();
+
+	// 弾丸と敵のあたり
+	{
+		// 弾丸のコリジョンノードを取得
+		const Sphere& bulletsphere = m_player->getCollisionNodeBullet();
+
+		// 敵
+		for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin(); it != m_enemy.end();)
+		{
+			// 敵のコリジョンノードを取得
+			const Sphere& enemySphere = it->get()->getCollisionNode();
+
+			// 球と旧のあたりをチェック
+			if (checkSphereToSphere(bulletsphere, enemySphere))
+			{// 当たった場合
+
+				// 弾丸をもとに戻す
+				m_player->resetBullet();
+
+				// ヒットエフェクトを出す
+				ModelEffectManager::getInstance()->Entry(
+					L"Resources/HitEffect.cmo",	// モデルファイル
+					15,	// 寿命フレーム数
+					(*it)->getTrance(),	// ワールド座標
+					Vector3(0, 0, 0),	// 速度
+					Vector3(0, 0, 0),	// 加速度
+					Vector3(0, 0, 0),	// 回転角（初期）
+					Vector3(0, 0, 0),	// 回転角（最終）
+					Vector3(0, 0, 0),	// スケール（初期）
+					Vector3(10, 10, 10)	// スケール（最終）
+				);
+				// 敵を殺す
+				it = m_enemy.erase(it);
+
+				// 敵の数が０なら
+				if (m_enemy.size() <= 0)
+				{
+					// クリア
+					//m_ground.DisableLighting();
+					m_objSkyModel.DisableLighting();
+				}
+			}
+			else
+			{// あたっていない場合
+				it++;
+			}
+			
+		}
+	}
 
 	// 空の更新
 	m_objSkyModel.update();
@@ -267,6 +340,9 @@ void Game::Update(DX::StepTimer const& timer)
 		m_worldTeaPod[i] =  scaleMat * rotRev * transMat * rotMat;
 	}
 
+	// ヒットエフェクトの更新
+	ModelEffectManager::getInstance()->Update();
+
 	// フレームを数える
 	m_frame++;
 }
@@ -320,19 +396,20 @@ void Game::Render()
 	m_objSkyModel.draw();
 
 	// 地面を描画
-	m_ground->Draw(m_d3dContext.Get(), 
-		*m_states, 
-		m_world, m_view, m_proj);
+	//m_ground.draw();
+	m_landShape.Draw();
 
 	// プレイヤーの描画
 	m_player->render();
 
 	// 敵
-	for (int i = 0; i < enemeyNum; i++)
+	for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin(); it != m_enemy.end();it++)
 	{
-		m_enemy[i].render();
+		it->get()->render();
 	}
 
+	// エフェクトの描画
+	ModelEffectManager::getInstance()->Draw();
 
 	// 描画する
 	m_batch->Begin();
@@ -340,6 +417,8 @@ void Game::Render()
 	m_batch->DrawIndexed(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, indices, 6, vertices, 4);
 
 	m_batch->End();
+
+
 
     Present();
 }
@@ -349,11 +428,11 @@ void Game::Render()
 /// </summary>
 void Game::setCamera()
 {
-	//Vector3 eyepos = Vector3(m_tankPos - m_player[PLAYER_PARTS_BASE].getTranse() * 50);
+	//Vector3 eyepos = Vector3(m_tankPos - m_player[PLAYER_PARTS_BASE].getTrans() * 50);
 	//eyepos += Vector3(0.0f, 5.0f, 0.0f);
 	//m_camera->setEyePos(eyepos);
 
-	//Vector3 refpos = Vector3(m_tankPos.x +  m_player[PLAYER_PARTS_BASE].getTranse().x * 100, m_tankPos.y, m_tankPos.z + m_player[PLAYER_PARTS_BASE].getTranse().z * 100);
+	//Vector3 refpos = Vector3(m_tankPos.x +  m_player[PLAYER_PARTS_BASE].getTrans().x * 100, m_tankPos.y, m_tankPos.z + m_player[PLAYER_PARTS_BASE].getTrans().z * 100);
 	//m_camera->setRefPos(refpos);
 }
 

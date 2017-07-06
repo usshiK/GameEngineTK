@@ -12,7 +12,6 @@ Enemy::Enemy()
 
 Enemy::~Enemy()
 {
-
 }
 
 void Enemy::initialize(DirectX::SimpleMath::Vector3 detoultPos)
@@ -39,9 +38,22 @@ void Enemy::initialize(DirectX::SimpleMath::Vector3 detoultPos)
 
 	m_object[ENEMY_PARTS_BASE].setTrans(detoultPos);
 
+	// 影の初期化
+	m_shadow.LoadModel(L"Resources/shadow.cmo");
+	m_shadow.setTrans(m_object[ENEMY_PARTS_BASE].getTrans());
+	m_shadow.setTransY(0.01f);
+
 	m_ai = GO;
 
 	m_frame = 0;
+
+	// 武器のあたり判定ノードの初期化
+	{
+		m_collisionNode.initialize();				// 初期化
+		m_collisionNode.setParent(&m_object[0]);	// 基盤パーツにセット
+		m_collisionNode.setTrans(Vector3(0, 0.7f, 0));	// オフセットをセット
+		m_collisionNode.setLocalRadius(0.7f);		// 半径
+	}
 }
 
 void Enemy::update()
@@ -74,7 +86,7 @@ void Enemy::update()
 	m_object[ENEMY_PARTS_BODY].setRotateX(XMConvertToRadians(m_Rotation.x));
 
 	// 翼を上下させる
-	if (m_object[ENEMY_PARTS_BASE].getTranse().y <= 0.0f)
+	if (m_object[ENEMY_PARTS_BASE].getTrans().y <= 0.0f)
 	{
 		// 翼をもとに戻す
 		m_object[ENEMY_PARTS_WING].setRotateY(0);
@@ -91,14 +103,19 @@ void Enemy::update()
 		m_object[ENEMY_PARTS_WING].setTransZ(0.0f);
 	}
 	// 重力を掛ける(仮)
-	if (m_object[ENEMY_PARTS_BASE].getTranse().y > 0)
+	if (m_object[ENEMY_PARTS_BASE].getTrans().y > 0)
 	{
-		m_object[ENEMY_PARTS_BASE].setTransY(m_object[ENEMY_PARTS_BASE].getTranse().y - 0.2f);
+		m_object[ENEMY_PARTS_BASE].setTransY(m_object[ENEMY_PARTS_BASE].getTrans().y - 0.2f);
 	}
 	else
 	{
 		m_object[ENEMY_PARTS_BASE].setTransY(0);
 	}
+
+	// 影にプレイヤーを追わせる
+	m_shadow.setTrans(m_object[ENEMY_PARTS_BASE].getTrans());
+	m_shadow.setTransY(0.01f);
+
 	// モデル達の更新
 	m_object[ENEMY_PARTS_BASE].update();
 	m_object[ENEMY_PARTS_BODY].update();
@@ -106,11 +123,14 @@ void Enemy::update()
 	m_object[ENEMY_PARTS_HEAD].update();
 	m_object[ENEMY_PARTS_WING].update();
 
+	// 影の更新
+	m_shadow.update();
+
 	// 前方に移動
 	Vector3 moveV = Vector3(0.0f, 0.0f, 0.05f);
 	Matrix rotmat = Matrix::CreateRotationY(m_object[ENEMY_PARTS_BASE].getRotate().y);
 	moveV = Vector3::TransformNormal(moveV, rotmat);
-	m_object[ENEMY_PARTS_BASE].setTrans(m_object[ENEMY_PARTS_BASE].getTranse() - moveV);
+	m_object[ENEMY_PARTS_BASE].setTrans(m_object[ENEMY_PARTS_BASE].getTrans() - moveV);
 
 	// 前かがみにする
 	if (m_Rotation.x >= -15.0f)
@@ -118,7 +138,11 @@ void Enemy::update()
 		m_Rotation.x -= 2.0f;
 	}
 
+	// あたり判定ノードの更新
+	m_collisionNode.update();
+
 	m_frame++;
+
 }
 
 void Enemy::render()
@@ -127,8 +151,17 @@ void Enemy::render()
 	{
 		it->draw();
 	}
+
+	// 影
+	m_shadow.DrawSubtractive();
+
+	// あたり判定ノードの描画
+	m_collisionNode.draw();
 }
 
+/// <summary>
+/// AIごとに動きを設定
+/// </summary>
 void Enemy::action()
 {
 	if (m_ai == Enemy::ROT_LEFT)
@@ -158,7 +191,7 @@ void Enemy::action()
 	if (m_ai == Enemy::FLY)
 	{
 		// 上に飛ばす
-		m_object[ENEMY_PARTS_BASE].setTransY(m_object[ENEMY_PARTS_BASE].getTranse().y + 0.25f);
+		m_object[ENEMY_PARTS_BASE].setTransY(m_object[ENEMY_PARTS_BASE].getTrans().y + 0.25f);
 
 		// 翼を回転
 		m_object[ENEMY_PARTS_WING].setRotateY(m_object[ENEMY_PARTS_WING].getRotate().y + 0.3f);
@@ -168,9 +201,10 @@ void Enemy::action()
 	}
 }
 
+
 const Vector3& Enemy::getTrance()
 {
-	return m_object[ENEMY_PARTS_BASE].getTranse();
+	return m_object[ENEMY_PARTS_BASE].getTrans();
 }
 
 const Vector3& Enemy::getRotation()
@@ -178,9 +212,9 @@ const Vector3& Enemy::getRotation()
 	return m_object[ENEMY_PARTS_BASE].getRotate();
 }
 
-const sphereNode & Enemy::getColissionNodeBullet()
+sphereNode & Enemy::getCollisionNode()
 {
-	return m_colissionNodeBullet;
+	return m_collisionNode;
 }
 
 float Enemy::sinWave(float t)

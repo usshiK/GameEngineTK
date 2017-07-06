@@ -26,11 +26,15 @@ private:
 
 	std::vector<Obj3d> m_object;
 
+	Obj3d m_shadow;
+
 	// キーボード
 	DirectX::Keyboard* m_keyBoard;
+	DirectX::Keyboard::KeyboardStateTracker m_KeyboardTracker;
 
 	// 玉のスピード
-	DirectX::SimpleMath::Vector3 m_bulltVel;
+	DirectX::SimpleMath::Vector3 m_bulltVec;
+	// 発射しているならtrue
 	bool isfire;
 
 	// 球状あたり判定ノード
